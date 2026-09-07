@@ -1,0 +1,31 @@
+{
+  "aindaco1/dust-wave-podcast": {
+    "docs": [
+      "docs/CURRENT_STATE.md",
+      "docs/PRELAUNCH_READINESS.md",
+      "docs/ALIGNMENT_GATE.md"
+    ],
+    "expectations": [
+      {
+        "workflow": ".github/workflows/launch-readiness-monitor.yml",
+        "event": "schedule",
+        "maxAgeHours": 48
+      }
+    ],
+    "artifacts": [
+      {
+        "workflow": ".github/workflows/launch-readiness-monitor.yml",
+        "adapter": "podcast",
+        "namePrefix": "launch-readiness-",
+        "maxAgeHours": 48,
+        "entry": "report.json"
+      }
+    ]
+  },
+  "aindaco1/zema-landing": {
+    "docs": [
+      "docs/OPERATIONS.md",
+      "docs/MEDIA_PIPELINE.md"
+    ]
+  }
+}

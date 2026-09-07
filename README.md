@@ -1,40 +1,33 @@
 # github-repo-scan
 
-Weekly GitHub repository health reports with links, recommendations, and a Markdown handoff for Codex. Planned stack: Cloudflare and GitHub, using Opportunity Radar's email conventions. The Cloudflare Email Sending versus Resend choice is recorded in the email guide.
+Weekly GitHub maintenance reports with evidence links, recommendations and a Markdown handoff for Codex. Runs on Cloudflare using a read-only GitHub App and Cloudflare Email Sending, with Opportunity Radar's shared digest presentation.
 
-**Status: planning scaffold with a working secret-check command and CI.** The public repository contains the implementation plan and default scan policy. The scanner, convenience CLI, scheduled workflow, Cloudflare resources, and email delivery have not been implemented or enabled.
+Private-repository scanning is required and implemented. The public source contains no live scan data. Defaults discover owner repositories and forks, excluding archived repositories and `burque-presente`; all of these choices are editable. The agreed schedule is Sunday at 08:00 America/Denver.
 
-## Project guides
-
-- [Implementation plan](docs/IMPLEMENTATION_PLAN.md): architecture, reuse, delivery, credentials, acceptance tests, and the path toward bounded automation.
-- [Email integration](docs/EMAIL.md): required Opportunity Radar reuse and the pending provider decision.
-- [Repository selection](docs/REPOSITORY_SELECTION.md): add/remove repositories, archived opt-ins, selection precedence, and the planned CLI.
-- [Example Codex handoff](docs/EXAMPLE_CODEX_HANDOFF.md): portable weekly attachment format, using clearly dated historical cases.
-- [Contributor instructions](AGENTS.md): project boundaries and document ownership.
-
-## Scan settings
-
-Edit [config/scan.json](config/scan.json) locally or with GitHub's file editor for public-safe settings. This is the default active policy; one complete private R2 policy bundle can replace it when private configuration is needed. The [schema](config/scan.schema.json) defines its structure; the selection guide defines its behavior.
-
-**Private-repository scanning is a required v1 capability.** Public source does not mean public-only access. Defaults discover accessible `aindaco1` repositories, include private repositories and forks, and exclude archived repositories plus `aindaco1/burque-presente`. You can choose specific repositories instead, keep persistent exclusions, and enable archived scanning globally or for individual repositories.
-
-Once implemented, the scanner will read the latest validated policy from the active source (this repository's default branch or a private R2 bundle) at the start of each run, so changing scan coverage will not require a Worker deployment. For now, edits update the checked-in plan/configuration only.
-
-The agreed report delivery target is Sunday at 08:00 America/Denver, with an attached Markdown file. Sender and recipient are private deployment configuration. v1 will collect and recommend; maintenance actions are performed separately through Codex under the owner's authorization.
-
-## Secret checks
-
-After cloning, initialize the pinned public Platform submodule and run:
+## Use it
 
 ```sh
 git submodule update --init --recursive
-npm run security:secrets
+npm ci
+npm run check
+npm run radar -- repos list --all --private
+npm run radar -- scan --preview --private
 ```
 
-This reuses Dust Wave Platform's scanner for tracked files and known local secrets, and checks reachable Git history for the same credential patterns. CI runs it on pushes and pull requests without production credentials. See [public-source and secret handling](docs/SECURITY.md) for its scope and limits.
+The current deployment uses a complete private policy bundle in R2. Its ignored local source is `.private/policy.json`; add/remove/archive commands with `--private` edit that file, and `policy publish --private` applies it to the next run. Public-safe installations can instead read the checked-in policy from GitHub at one exact commit. Selection changes do not require a Worker deployment.
 
-Private report contents, private repository-specific policy, personal email addresses, and provider account inventories are not public source. Use the selection guide's private-policy source when configuration itself needs to name private repositories.
+The scanner only collects and recommends. It never changes scanned repositories. The email's actual Markdown attachment contains the full open issue/PR inventory, current evidence, scope, uncertainty and a Codex operating brief. Reports and credentials remain private.
 
-## Next milestone
+## Guides
 
-Build and verify a read-only scan preview with GitHub App credentials that actually reach the configured private repositories. Compare discovery against an authenticated owner inventory; prove private Actions/issues/PR reads and revoked-access handling. Keep the resulting report and Markdown attachment private. A public-only preview cannot satisfy v1 acceptance. The subsequent milestone adds Opportunity Radar's email conventions and the selected transport, then verifies attachment delivery before enabling the Sunday schedule.
+- [Repository selection](docs/REPOSITORY_SELECTION.md): add/remove repositories, archived opt-ins and precedence.
+- [Architecture](docs/ARCHITECTURE.md): collector, evidence rules, storage and shared boundaries.
+- [Configuration](docs/CONFIGURATION.md): runtime secrets and private deployment settings.
+- [Email](docs/EMAIL.md): Opportunity Radar reuse, attachments and delivery reconciliation.
+- [Operations](docs/OPERATIONS.md): preview, deployment, health, recovery and rollback.
+- [Implementation and acceptance plan](docs/IMPLEMENTATION_PLAN.md): remaining observations and the path toward bounded automation.
+- [Security](docs/SECURITY.md): public-source and secret/history checks.
+- [Example Codex handoff](docs/EXAMPLE_CODEX_HANDOFF.md): historical illustrative format.
+- [Contributor instructions](AGENTS.md).
+
+Live deployment, email delivery and future scheduled-cycle acceptance are recorded separately in operations. A complete scan proves collection coverage; it does not mean every project is healthy.

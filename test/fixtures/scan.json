@@ -1,0 +1,105 @@
+{
+  "id": "synthetic-preview",
+  "at": "2026-09-07T14:00:00Z",
+  "policy": {
+    "version": "synthetic",
+    "hash": "ae8cfb5ca5c1eca8026a38593c05bbe33ccab992f9a82dd00be51fb80ac9716d",
+    "bundle": {
+      "selection": {
+        "schemaVersion": 1,
+        "mode": "discover",
+        "owners": [
+          "owner"
+        ],
+        "include": [],
+        "exclude": [],
+        "includeArchived": false,
+        "includeForks": true,
+        "overrides": {}
+      },
+      "repos": {},
+      "dispositions": []
+    }
+  },
+  "selection": [
+    {
+      "repository": "owner/repo-1",
+      "repositoryId": 1,
+      "selected": true,
+      "reason": "owner_discovery",
+      "private": false,
+      "archived": false,
+      "fork": false,
+      "repo": {
+        "id": 1,
+        "full_name": "owner/repo-1",
+        "private": false,
+        "archived": false,
+        "fork": false,
+        "default_branch": "main",
+        "owner": {
+          "login": "owner"
+        },
+        "html_url": "https://github.com/owner/repo-1",
+        "has_issues": true,
+        "size": 1
+      }
+    }
+  ],
+  "repositories": [
+    {
+      "repo": {
+        "id": 1,
+        "full_name": "owner/repo-1",
+        "private": false,
+        "archived": false,
+        "fork": false,
+        "default_branch": "main",
+        "owner": {
+          "login": "owner"
+        },
+        "html_url": "https://github.com/owner/repo-1",
+        "has_issues": true,
+        "size": 1
+      },
+      "headSha": "current",
+      "observedAt": "2026-09-07T14:00:00Z",
+      "branches": [
+        "main"
+      ],
+      "workflows": [
+        {
+          "id": 1,
+          "path": ".github/workflows/test.yml",
+          "name": "Test",
+          "state": "active"
+        }
+      ],
+      "runs": [
+        {
+          "id": 5,
+          "attempt": 1,
+          "workflowId": 1,
+          "path": ".github/workflows/test.yml",
+          "name": "Test",
+          "event": "push",
+          "branch": "main",
+          "sha": "abc",
+          "status": "completed",
+          "conclusion": "failure",
+          "createdAt": "2026-09-06T12:00:00Z",
+          "url": "https://github.com/owner/repo-1/actions/runs/5",
+          "pullNumbers": []
+        }
+      ],
+      "jobs": {},
+      "prs": [],
+      "issues": [],
+      "docs": [],
+      "artifacts": [],
+      "gaps": [],
+      "requests": 0
+    }
+  ],
+  "gaps": []
+}

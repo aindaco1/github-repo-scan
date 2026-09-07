@@ -2,10 +2,10 @@
 
 This repository owns `github-repo-scan`, a Cloudflare-hosted GitHub maintenance radar. Read [README.md](README.md), the [implementation plan](docs/IMPLEMENTATION_PLAN.md), and [repository selection](docs/REPOSITORY_SELECTION.md) before working on behavior.
 
-- Current status is a planning scaffold with a working shared secret audit and CI. Do not describe the CLI, scanner, scheduling or email delivery as working until implemented and verified.
+- The CLI and Cloudflare scanner are implemented. Verify live deployment/delivery state before reporting it; local tests, hosted scans and real scheduled acceptance are separate evidence.
 - Stay DRY. One selection resolver and one report model must serve the local CLI and Worker. Reuse appropriate exact-version Dust Wave Platform primitives; consumer policy, data, secrets and deployment remain here.
 - `config/scan.json` is the default public-safe selection policy; a complete private R2 bundle may replace it as the single active source when private settings are needed. `config/scan.schema.json` defines its structure; `docs/REPOSITORY_SELECTION.md` owns selection behavior. Do not duplicate or overlay active settings in Worker vars, D1, or a second UI store.
-- Outbound email must follow [EMAIL.md](docs/EMAIL.md), including Opportunity Radar's existing identity and digest conventions. Resolve the Cloudflare-versus-Resend requirement before implementing a transport.
+- Outbound email must follow [EMAIL.md](docs/EMAIL.md), including Opportunity Radar's existing identity and digest conventions. Cloudflare Email Sending is the selected transport.
 - Private-repository scanning is mandatory for v1. The public source repository does not restrict scan targets to public repositories. Missing private access is an explicit coverage/setup failure; never silently fall back to public-only collection.
 - Defaults exclude archived repositories and `burque-presente`; these are editable preferences, not hard-coded prohibitions. Explicit archived opt-ins permit read-only scanning, not unarchiving or mutations.
 - The scheduled runtime's GitHub access is read-only. The current user request and standing authorization govern any separate setup, publication or maintenance action; ask only for concrete actions that lack authorization.

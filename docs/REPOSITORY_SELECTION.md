@@ -1,10 +1,10 @@
 # Repository selection
 
-This is the implementation contract for changing scan coverage. The default [policy](../config/scan.json) and its [JSON Schema](../config/scan.schema.json) are checked in. The resolver and commands described here are planned, not implemented yet.
+This is the implementation contract for changing scan coverage. The default [policy](../config/scan.json) and its [JSON Schema](../config/scan.schema.json) are checked in. The same implemented resolver and commands serve local previews and the Worker.
 
 ## One editable policy
 
-`config/scan.json` is the default active repository-selection source, for public-safe settings. Edit it in your checkout or open the file in GitHub and use **Edit**. Once runtime support exists, a validated change merged into the default branch takes effect on the next scan without deploying the Worker. GitHub settings CI checks the same schema and resolver used locally and at runtime.
+`config/scan.json` is the default active repository-selection source, for public-safe settings. Edit it in your checkout or open the file in GitHub and use **Edit**. A validated change merged into the default branch takes effect on the next scan without deploying the Worker. GitHub settings CI checks the same schema and resolver used locally and at runtime.
 
 | Field | Meaning |
 | --- | --- |
@@ -32,7 +32,7 @@ Production evidence remains in private D1/R2 and the owner's email attachment. P
 
 Automatic discovery can scan accessible private repositories without publishing their names: discovery results and reports remain private. Never put private repository names, private documentation URLs, or sensitive dispositions in the public policy.
 
-If explicit private configuration is required, use `POLICY_SOURCE=r2` and store **one complete versioned policy bundle** in the already-planned private R2 bucket. That bundle owns the selection, context and disposition files; it replaces the public GitHub policy as the active source. There is no public/private overlay and no duplicate live settings. Keep its editable local source in ignored `.private/`, and use the operator CLI to validate, preview and atomically publish a new bundle. Public `config/scan.json` then serves as the safe example only.
+If explicit private configuration is required, use `POLICY_SOURCE=r2` and store **one complete versioned policy bundle** in the private R2 bucket. That bundle owns the selection, context and disposition files; it replaces the public GitHub policy as the active source. There is no public/private overlay and no duplicate live settings. Keep its editable local source in ignored `.private/`, and use the operator CLI to validate, preview and atomically publish a new bundle. Public `config/scan.json` then serves as the safe example only.
 
 The schema, selection resolver and add/remove/archive commands are shared across both sources. With the private source selected, commands operate on the ignored local policy and report that a private bundle publication is required. The runtime snapshots one immutable bundle version just as it snapshots a Git commit. Switching sources is an explicit operator configuration change with preview; a missing bundle fails visibly instead of falling back to public defaults.
 
@@ -56,9 +56,9 @@ For example, to scan an archived repository named `aindaco1/example-archive`, ad
 
 This is an illustrative `overrides` object, not a real repository or a complete replacement configuration.
 
-## Easy CLI operations to implement
+## Easy CLI operations
 
-The planned CLI uses the same policy parser, validator and selection resolver as the Worker. Mutating commands edit the local active policy (`config/scan.json` for GitHub, ignored `.private/` for R2), print a local diff, and do not commit, push, scan or send mail. Private diffs are never uploaded to CI or public logs. Publishing that settings change follows the repository's normal GitHub workflow.
+The CLI uses the same policy parser, validator and selection resolver as the Worker. Mutating commands edit the local active policy (`config/scan.json` for GitHub, ignored `.private/` for R2), print a local diff, and do not commit, push, scan or send mail. Private diffs are never uploaded to CI or public logs. Publishing that settings change follows the repository's normal GitHub workflow.
 
 ```text
 npm run radar -- repos list --all
@@ -74,7 +74,7 @@ npm run radar -- repos mode discover
 
 `add` inserts into `include` and clears the exact exclusion. `remove` inserts into `exclude`, removes the exact inclusion and removes its override. `--include-archived` is an explicit per-repo opt-in. `archived on/off` changes the global flag; with `--repo` it changes that repository's override and requires an existing candidate. It does not clear exclusions. These commands normalize case, deduplicate, validate before writing and make the edit atomically.
 
-`repos list --all` is read-only. It previews selected, excluded, unavailable and invalid entries with a reason such as `owner_discovery`, `explicit_include`, `explicit_exclude`, `archived_default`, `archived_override`, `fork_filter`, or `not_accessible`. It displays the policy commit/hash and archive/fork status. It performs only the metadata reads needed to resolve coverage, not full Actions/issues/PR collection. An offline preview must label access/archive metadata unknown instead of guessing.
+`repos list --all` is read-only. It previews selected, excluded, unavailable and invalid entries with a reason such as `owner_discovery`, `explicit_include`, `explicit_exclude`, `archived_default`, `archived_override`, `fork_filter`, or `not_accessible`. It displays the policy commit/hash and archive/fork status. It performs only the metadata reads needed to resolve coverage, not full Actions/issues/PR collection. Live selection preview requires App credentials. Use synthetic fixture previews for offline testing; they make no live-access claim.
 
 Avoid a separate settings dashboard or configuration-editing bot in v1: GitHub's file editor and the local CLI cover the simple use cases without another application or credential with repository-write access.
 

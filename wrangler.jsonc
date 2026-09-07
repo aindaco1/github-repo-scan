@@ -1,0 +1,55 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "github-repo-scan",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-07",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "preview_urls": false,
+  "observability": { "enabled": true, "head_sampling_rate": 1 },
+  "limits": { "cpu_ms": 300000 },
+  "vars": {
+    "CONTROL_REPOSITORY": "aindaco1/github-repo-scan",
+    "POLICY_SOURCE": "github",
+    "SCHEDULE_ENABLED": "false",
+    "SEND_ENABLED": "false",
+    "FIRST_WEEKLY_SLOT": "weekly-2026-09-13-America-Denver",
+  },
+  "triggers": { "crons": ["*/15 * * * *"] },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "github-repo-scan",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations",
+    },
+  ],
+  "r2_buckets": [
+    { "binding": "REPORTS", "bucket_name": "github-repo-scan-reports" },
+  ],
+  "workflows": [
+    {
+      "binding": "SCAN",
+      "name": "github-repo-scan",
+      "class_name": "ScanWorkflow",
+    },
+  ],
+  "send_email": [
+    {
+      "name": "EMAIL",
+      "allowed_destination_addresses": ["recipient@example.invalid"],
+      "allowed_sender_addresses": ["sender@example.invalid"],
+    },
+  ],
+  "queues": {
+    "consumers": [
+      {
+        "queue": "github-repo-scan-delivery",
+        "max_batch_size": 10,
+        "max_batch_timeout": 5,
+        "max_retries": 5,
+        "dead_letter_queue": "github-repo-scan-delivery-dlq",
+      },
+    ],
+  },
+}

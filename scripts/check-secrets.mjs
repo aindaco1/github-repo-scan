@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -16,7 +17,7 @@ function git(root, args, options = {}) {
 }
 
 // The patterns stay in Platform; this adapter adds complete reachable history.
-export function scanReachableHistory(root) {
+export function scanReachableHistory(root, exactValues = []) {
   if (git(root, ['rev-parse', '--is-shallow-repository']).trim() === 'true') {
     throw new Error('Full Git history is required.');
   }
@@ -41,6 +42,7 @@ export function scanReachableHistory(root) {
     }
     const content = git(root, ['cat-file', type, id]);
     findings.push(...scanTextForTrackedSecrets(content, `git-object:${id}`));
+    if (exactValues.some(value => content.includes(value))) findings.push({file:`git-object:${id}`,label:'Exact local sensitive value detected; value withheld.'});
     objectsScanned += 1;
   }
   return { objectsScanned, findings };
@@ -62,7 +64,16 @@ function main() {
     const forbidden = forbiddenTrackedPaths(root);
     for (const path of forbidden) console.error(`Private/generated file must not be tracked: ${path}`);
     ok = ok && forbidden.length === 0;
-    const history = scanReachableHistory(root);
+    let exactValues = [];
+    try {
+      const local = JSON.parse(readFileSync(resolve(root, '.private/runtime-secrets.json'), 'utf8'));
+      exactValues = Object.entries(local).filter(([name,value]) => /(?:TOKEN|PRIVATE_KEY|_EMAIL)$/.test(name) && typeof value === 'string' && value.length >= 8).flatMap(([,value]) => [value, JSON.stringify(value).slice(1,-1)]);
+    } catch (error) { if(error.code !== 'ENOENT') throw error; }
+    for (const path of git(root, ['ls-files', '-z']).split('\0').filter(Boolean)) {
+      try { if (exactValues.some(value => readFileSync(resolve(root,path),'utf8').includes(value))) {console.error(`${path}: Exact local sensitive value detected; value withheld.`);ok=false;} }
+      catch (error) { if (error.code !== 'EISDIR') throw error; }
+    }
+    const history = scanReachableHistory(root, exactValues);
     for (const finding of history.findings) console.error(`${finding.file}: ${finding.label}`);
     if (history.findings.length) ok = false;
     console.log(`Reachable-history credential scan: ${history.objectsScanned} objects, ${history.findings.length} findings.`);
