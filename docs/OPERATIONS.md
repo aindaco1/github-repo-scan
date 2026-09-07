@@ -40,7 +40,7 @@ The delivery Queue verifies source/account/subscription/domain and fixed identit
 
 ## Retention and rollback
 
-Retain report bundles for 90 days. Never delete a bundle with unresolved delivery. Keep minimal history for one year and preserve active findings. Cleanup affects only this scanner's data, not repository releases, branches or other projects' builds. Keep current local dependencies, fixtures, preview commands and a compatible deployment rollback.
+Retain report bundles for 90 days. Never delete a bundle with unresolved delivery. Keep minimal run/delivery history for one year and preserve active findings. Failed-run notification receipts persist independently so retention cannot cause repeat emails. Cleanup affects only this scanner's data, not repository releases, branches or other projects' builds. Keep current local dependencies, fixtures, preview commands and a compatible deployment rollback.
 
 To stop the service, set `SCHEDULE_ENABLED=false` and `SEND_ENABLED=false` in private deployment configuration and deploy. Preserve D1/R2 for reconciliation. Restore the previous Worker version if needed; migrations remain additive. Changing the Platform pin affects this consumer only. App/key rotation, uncertain-email recovery and report deletion are separate operations.
 
@@ -50,10 +50,12 @@ The September 7 setup verified the App against 41 owner repositories, including 
 
 The shared presentation passed source characterization in Platform and Opportunity Radar. Opportunity Radar's migration was merged and [deployed through its protected workflow](https://github.com/aindaco1/dust-wave-opportunity-radar/actions/runs/34150762728).
 
-The scanner's [initial implementation CI](https://github.com/aindaco1/github-repo-scan/actions/runs/34152377562) passed. Its real hosted scan on September 7 read 33 repositories, including 2 private targets, 2,767 workflow runs, 1 open PR and 6 open issues with zero coverage gaps. Cloudflare confirmed delivery at **18:42:45 UTC**. The privately downloaded HTML, text and Markdown matched the frozen manifest, and the digest layout was inspected. Run, message and provider event identifiers are retained privately.
+The scanner's [initial implementation CI](https://github.com/aindaco1/github-repo-scan/actions/runs/34152377562) passed. Its real hosted scan on September 7 read 33 repositories, including 2 private targets, 2,767 workflow runs, 1 open PR and 6 open issues with zero coverage gaps. Cloudflare confirmed delivery at **18:42:45 UTC**. The privately downloaded HTML, text and Markdown matched the frozen manifest. The subsequently supplied received attachment exposed an extra Base64 encoding: downloaded R2 bytes alone had not established correct email-attachment bytes. The correction and summary layout are covered in [Email](EMAIL.md). Run, message and provider event identifiers are retained privately.
 
 The [protected GitHub deployment](https://github.com/aindaco1/github-repo-scan/actions/runs/34153091362) succeeded using a dedicated account-scoped Workers Scripts/D1/Queues token. Scheduling and sending are enabled. First delivery is **Sunday September 13 at 08:00 America/Denver**; the next cycle is September 20. Two real Sunday deliveries remain pending operational acceptance. Manual scans, the successful test email and timezone tests do not satisfy that gate.
 
 Four public incident decisions reference current Podcast/ZEMA canonical documentation and exact finding signatures. They distinguish a repaired historical callback and completed import repair from pending scheduled/benchmark evidence, and preserve the owner's media acceptance deferral. New incident evidence, a changed document hash or the October 7 review date invalidates the matching decision. The real test email preceded these final context refinements; subsequent scans use the published reviewed policy.
 
 Change detection compares against the most recently delivered report. Local and hosted previews cannot consume changes before the recipient sees them.
+
+The September 7 summary-format update replaces cards with headings, bullet points and links; sends native UTF-8 attachment bytes; and adds delivered-run receipts while keeping all open issues/PRs. Apply migration `0002_reported_actions.sql` before deploying. Existing confirmed deliveries are indexed automatically; no receipt reset or report overwrite is needed.

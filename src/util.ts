@@ -5,6 +5,13 @@ import {
   type ParseError,
 } from "jsonc-parser";
 export const lower = (value: string) => value.toLowerCase();
+export const failureConclusions = new Set([
+  "failure",
+  "timed_out",
+  "action_required",
+  "startup_failure",
+  "stale",
+]);
 export async function hash(value: string | Uint8Array): Promise<string> {
   const bytes =
     typeof value === "string" ? new TextEncoder().encode(value) : value;

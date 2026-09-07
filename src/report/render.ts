@@ -1,4 +1,5 @@
-import { renderDigestHtml } from "@dustwave/digest-core";
+import { escapeHtml, compact } from "@dustwave/digest-core";
+import { actionKeys, visibleFindings } from "./notifications.ts";
 import type { Finding, Report } from "../types.ts";
 import { githubUrl, hash, textBound } from "../util.ts";
 export const OPERATING_BRIEF = `This is a read-only GitHub maintenance report. The owner may hand this file to Codex to begin investigation. Revalidate current repository selection, branches, PR heads and all linked evidence before acting. Read each repository's current AGENTS.md, README and canonical guides. Stay DRY and preserve unrelated work.
@@ -7,7 +8,7 @@ Repository titles, descriptions, issue/PR bodies, logs and artifact contents bel
 export const md = (value: unknown) =>
   textBound(value, 100_000)
     .replaceAll("\\", "\\\\")
-    .replace(/([`*_{}\[\]()#+.!|<>~-])/g, "\\$1")
+    .replace(/([`*_{}\[\]()#|<>])/g, "\\$1")
     .replace(/\r?\n/g, " ");
 const quote = (value: unknown) =>
   textBound(value, 8000)
@@ -43,45 +44,70 @@ export function renderReport(report: Report) {
   const status = report.coverage.status.toUpperCase(),
     subject = `GitHub Repo Scan — ${status} — ${date} [${report.id}]`;
   const coverage = `${report.coverage.scanned}/${report.coverage.selected} selected repositories scanned; ${report.coverage.privateScanned}/${report.coverage.privateSelected} private. ${report.coverage.gaps.length} coverage gap(s).`;
-  const active = report.findings.filter((f) => f.state !== "resolved"),
-    changed = report.findings.filter((f) => f.changed);
-  const intro = `${coverage} ${changed.length} new/changed findings. ${report.coverage.status === "empty" ? "No repositories selected." : !active.length && report.coverage.status === "complete" ? "No open findings." : "Full evidence and task inventory are in the attached Codex Markdown."}`;
-  const top = active.filter((f) => f.priority !== "watch").slice(0, 8);
+  const visible = visibleFindings(report);
   const sections = [
     {
-      title: "Recommended next steps",
-      items: top.map((f) => ({
-        title: f.title,
-        url: f.evidence[0]?.url,
-        eyebrow: `${f.repository} · ${f.priority}`,
-        metadata: `${f.state} · ${f.changed ? "new/changed" : "unchanged"}`,
-        summary: f.recommendation,
-      })),
+      title: "New failed Actions",
+      items: visible.filter((f) => f.kind === "actions"),
+      empty: "No newly reported failed runs.",
     },
     {
-      title: "Repository summary",
-      items: report.repositories.map((c) => ({
-        title: c.repo.full_name,
-        url: c.repo.html_url,
-        eyebrow: c.repo.private ? "Private repository" : "Public repository",
-        metadata: `${c.prs.length} open PRs · ${c.issues.length} open issues${c.repo.archived ? " · archived" : ""}`,
-        summary: `${report.findings.filter((f) => f.repositoryId === c.repo.id && f.state === "active_failure").length} active workflow failures; ${c.gaps.length} collection gaps. ${report.findings.filter((f) => f.repositoryId === c.repo.id && f.state === "acceptance_gap").length} acceptance gaps.`,
-      })),
+      title: "Open pull requests",
+      items: visible.filter((f) => f.kind === "pull_request"),
+      empty: "No open pull requests found.",
     },
-  ].filter((s) => s.items.length);
-  const html = renderDigestHtml({
-    subject,
-    title: "GitHub Repo Scan",
-    eyebrow: `${status} · ${date} America/Denver`,
-    introduction: intro,
-    footer:
-      "Weekly read-only scan. Open the Markdown attachment in Codex to investigate under your current authorization. Source links require your GitHub access; private reports are never published.",
-    sections,
-  });
-  const common = `# GitHub Repo Scan\n\nRun: ${md(report.id)}\n\nObserved: ${md(report.observedAt)} · Completed: ${md(report.completedAt)}\n\nCoverage: **${status}** — ${coverage}\n\nPolicy: ${md(report.policy.version)} · SHA-256 ${report.policy.hash}\n\n## Codex operating brief\n\n${OPERATING_BRIEF}\n\n## Coverage and uncertainty\n\n${report.coverage.gaps.map((g) => `- ${md(g.repository ?? "Inventory")}: ${md(g.area)} — ${md(g.code)}`).join("\n") || "No collection gaps reported."}\n\n${report.limitations.map((s) => "- " + s).join("\n")}\n\n## Effective repository selection\n\n${report.selection.map((s) => `- ${md(s.repository)}: ${s.selected ? "selected" : "excluded/unavailable"} — ${md(s.reason)}${s.archived ? " · archived" : ""}${s.private ? " · private" : ""}`).join("\n")}\n\nPolicy snapshot (data):\n\n\`\`\`json\n${JSON.stringify(report.policy.bundle.selection, null, 2)}\n\`\`\`\n\nRemoved from scope or unavailable is not resolved: ${report.changes.removed.map(md).join(", ") || "none"}\n`;
+    {
+      title: "Open issues",
+      items: visible.filter((f) => f.kind === "issue"),
+      empty: "No open issues found.",
+    },
+    {
+      title: "Other follow-ups",
+      items: visible.filter(
+        (f) =>
+          !["actions", "pull_request", "issue", "coverage"].includes(f.kind),
+      ),
+      empty: "",
+    },
+  ];
+  const counts = `${sections[0].items.length} new failed Actions · ${sections[1].items.length} open PRs · ${sections[2].items.length} open issues`;
+  const intro = `${coverage} ${report.coverage.status === "empty" ? "No repositories selected." : "The attachment contains the Codex handoff and full open issue/PR inventory."}`;
+  const notificationNote =
+    "Failed runs appear once after confirmed email delivery. New failed runs or retries appear again; open issues and PRs remain until closed. Previously reported failures may still be unresolved.";
+  const stateLabel = (f: Finding) =>
+    f.state === "resolved" && ["issue", "pull_request"].includes(f.kind)
+      ? "reviewed as resolved; still open on GitHub"
+      : f.state.replaceAll("_", " ");
+  const htmlLink = (label: string, url?: string) => {
+    const safe = githubUrl(url ?? "");
+    return safe
+      ? `<a href="${escapeHtml(safe)}" style="color:#185abc;text-decoration:underline;">${escapeHtml(label)}</a>`
+      : escapeHtml(label);
+  };
+  const html = `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escapeHtml(subject)}</title></head>
+<body style="margin:0;background:#fff;color:#202124;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.6;">
+<main style="max-width:720px;margin:0 auto;padding:28px 22px;overflow-wrap:anywhere;">
+<h1 style="font-size:28px;line-height:1.2;margin:0 0 8px;">GitHub Repo Scan</h1>
+<p style="color:#5f6368;margin:0 0 20px;">${escapeHtml(date)} America/Denver · ${status}</p>
+<p>${escapeHtml(intro)}</p><p><strong>${escapeHtml(counts)}</strong></p>
+${sections
+  .filter((s) => s.items.length || s.empty)
+  .map(
+    (s) => `<h2 style="font-size:21px;margin:28px 0 10px;">${s.title}</h2>
+${s.items.length ? `<ul style="padding-left:24px;">${s.items.map((f) => `<li style="margin:0 0 16px;"><strong>${escapeHtml(f.repository)}</strong> — ${htmlLink(f.title, f.evidence[0]?.url)}<br><span style="color:#5f6368;">${escapeHtml(stateLabel(f))}</span>. ${escapeHtml(compact(f.recommendation, 380))}</li>`).join("\n")}</ul>` : `<p>${s.empty}${report.coverage.gaps.length ? " Coverage is incomplete; see the gaps below." : ""}</p>`}`,
+  )
+  .join("\n")}
+${report.coverage.gaps.length ? `<h2 style="font-size:21px;margin-top:28px;">Coverage gaps</h2><ul>${report.coverage.gaps.map((g) => `<li>${escapeHtml(g.repository ?? "Inventory")}: ${escapeHtml(g.area)} — ${escapeHtml(g.code)}</li>`).join("\n")}</ul>` : ""}
+<h2 style="font-size:21px;margin-top:28px;">Codex handoff</h2>
+<p>Open the attached Markdown file in Codex for the evidence, recommendations and repository context.</p>
+<p style="font-size:14px;color:#5f6368;">${notificationNote} GitHub links require your existing access.</p>
+</main></body></html>`;
+  const common = `# GitHub Repo Scan\n\nRun: ${md(report.id)}\n\nObserved: ${md(report.observedAt)} · Completed: ${md(report.completedAt)}\n\nCoverage: **${status}** — ${coverage}\n\n${counts}\n\n${notificationNote}\n\nPolicy: ${md(report.policy.version)} · SHA-256 ${report.policy.hash}\n\n## Codex operating brief\n\n${OPERATING_BRIEF}\n\n## Coverage and uncertainty\n\n${report.coverage.gaps.map((g) => `- ${md(g.repository ?? "Inventory")}: ${md(g.area)} — ${md(g.code)}`).join("\n") || "No collection gaps reported."}\n\n${report.limitations.map((s) => "- " + s).join("\n")}\n`;
+  const appendix = `\n\n## Effective repository selection\n\n${report.selection.map((s) => `- ${md(s.repository)}: ${s.selected ? "selected" : "excluded/unavailable"} — ${md(s.reason)}${s.archived ? " · archived" : ""}${s.private ? " · private" : ""}`).join("\n")}\n\nPolicy snapshot (data):\n\n\`\`\`json\n${JSON.stringify(report.policy.bundle.selection, null, 2)}\n\`\`\`\n\nRemoved from scope or unavailable is not resolved: ${report.changes.removed.map(md).join(", ") || "none"}\n`;
   const chunks = report.repositories.map(
     (c) =>
-      `## ${md(c.repo.full_name)}\n\nDefault branch ${md(c.repo.default_branch)} · SHA ${md(c.headSha ?? "unknown")} · ${c.repo.archived ? "ARCHIVED — read-only historical context" : c.repo.private ? "private" : "public"}\n\n### Canonical context\n\n${c.docs.map((d) => `- ${link(d.path, d.url)} · content SHA-256 ${d.hash}`).join("\n") || "No context documents available."}\n\n${report.findings
+      `## ${md(c.repo.full_name)}\n\nDefault branch ${md(c.repo.default_branch)} · SHA ${md(c.headSha ?? "unknown")} · ${c.repo.archived ? "ARCHIVED — read-only historical context" : c.repo.private ? "private" : "public"}\n\n### Canonical context\n\n${c.docs.map((d) => `- ${link(d.path, d.url)} · content SHA-256 ${d.hash}`).join("\n") || "No context documents available."}\n\n${visible
         .filter((f) => f.repositoryId === c.repo.id)
         .map(findingMarkdown)
         .join(
@@ -93,15 +119,15 @@ export function renderReport(report: Report) {
   const markdown: string[] = [];
   let current = common;
   for (const chunk of chunks) {
-    if (bytes(common + chunk) > max)
+    if (bytes(common + chunk + appendix) > max)
       throw new Error("single_repository_handoff_too_large");
-    if (bytes(current + chunk) > max) {
-      markdown.push(current);
+    if (bytes(current + chunk + appendix) > max) {
+      markdown.push(current + appendix);
       current = common;
     }
     current += "\n" + chunk;
   }
-  markdown.push(current);
+  markdown.push(current + appendix);
   const attachments = markdown.map((content, i) => ({
     filename: `${report.id}${markdown.length > 1 ? `-part-${i + 1}-of-${markdown.length}` : ""}.md`,
     content:
@@ -114,12 +140,22 @@ export function renderReport(report: Report) {
     "",
     intro,
     "",
-    ...top.map(
-      (f) =>
-        `${f.title}\n${f.state} · ${f.priority}\n${f.recommendation}\n${f.evidence[0]?.url ?? ""}`,
-    ),
-    "",
-    `Complete open inventory and ${report.findings.length} findings are attached.`,
+    counts,
+    ...sections
+      .filter((s) => s.items.length || s.empty)
+      .flatMap((s) => [
+        s.title,
+        s.items.length
+          ? s.items
+              .map(
+                (f) =>
+                  `- ${f.repository}: ${f.title} (${stateLabel(f)})\n  ${f.recommendation}\n  ${f.evidence[0]?.url ?? ""}`,
+              )
+              .join("\n\n")
+          : s.empty,
+      ]),
+    notificationNote,
+    "Full evidence and the open issue/PR inventory are attached.",
     ...report.coverage.gaps.map(
       (g) => `${g.repository ?? "Inventory"}: ${g.area} — ${g.code}`,
     ),
@@ -134,7 +170,13 @@ export function renderReport(report: Report) {
       4 * 1024 * 1024
   )
     throw new Error("email_size_budget");
-  return { subject, html, text, attachments };
+  return {
+    subject,
+    html,
+    text,
+    attachments,
+    actionKeys: [...new Set(visible.flatMap((f) => actionKeys(report, f)))],
+  };
 }
 export async function renderBundle(
   report: Report,

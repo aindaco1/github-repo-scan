@@ -147,6 +147,8 @@ export type Report = {
     gaps: Gap[];
   };
   findings: Finding[];
+  // Delivery receipts at render time; full findings remain in the private JSON.
+  reportedActions?: string[];
   repositories: Collected[];
   changes: { added: string[]; removed: string[] };
   limitations: string[];

@@ -21,14 +21,15 @@ flowchart LR
 - `src/selection.ts`, `src/policy.ts`: validated scope, private coverage and immutable policy provenance. JSON Schema is compiled ahead of time for Workers; no runtime code generation.
 - `src/github/`: installation auth, bounded REST requests, complete pagination, repository collection and bounded artifact readers. Only token minting uses a GitHub POST; repository operations are reads.
 - `src/triage/classify.ts`: deterministic evidence rules. Workflow, event and branch scopes are separate. Older cancelled/skipped runs cannot erase a failure, and old removed branches are historical context. PR approvals count only against the current head. Required branch-protection policy remains explicitly unknown.
-- `src/report/render.ts`: one report becomes HTML, plain text and complete Codex Markdown, with frozen hashes. External text is escaped and source URLs restricted to GitHub.
+- `src/report/render.ts`: one report becomes a summary email, plain text and readable Codex Markdown, with frozen hashes. External text is escaped and source URLs restricted to GitHub.
 - `src/workflow/scan.ts`: per-repository checkpoints and frozen report orchestration. Tokens stay in memory, never in step results. A deadline produces explicit coverage gaps; missing policy/onboarding fails the run.
 - `src/email.ts`: outbox claim, fixed recipient, Cloudflare attachment send and delivery-event reconciliation. Provider acceptance and delivery are distinct states.
+- `src/report/notifications.ts`, `src/storage/notifications.ts`: one notification filter and durable delivered-run receipts. New run/attempt identities can notify; open issues and PRs remain visible. Receipts survive partial scans, scope changes and retention.
 - `src/storage/database.ts`: additive D1 storage, immutable report bundles, a last-delivered comparison baseline and conservative retention. Previews never consume changes awaiting delivery.
 - `src/index.ts`: authenticated operator endpoints, public minimal health, schedule and queue entry points.
 - `scripts/radar.ts`: local policy editing, private preview, onboarding and authenticated operator commands.
 
-The shared `@dustwave/digest-core` 0.1.0 presentation comes from Platform commit `4992520`. Opportunity Radar and this scanner independently pin it. It preserves the existing opportunity HTML byte for byte while consumers retain domain grouping, complete text/Markdown, storage, schedule, addresses and sending. Platform's existing worker-core provides timezone, bounded fetch and authentication comparison helpers.
+Platform `@dustwave/digest-core` 0.1.0 comes from commit `4992520`. The scanner reuses its escaping and compact text helpers with its own summary layout; Opportunity Radar keeps the card renderer. Platform's worker-core provides timezone, bounded fetch and authentication comparison helpers. Notification receipts and report content remain consumer-owned.
 
 ## Coverage and acceptance
 
