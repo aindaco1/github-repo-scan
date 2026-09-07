@@ -1,6 +1,7 @@
 import type { Report, RuntimeEnv } from "../types.ts";
 import { hash } from "../util.ts";
 import { renderBundle } from "../report/render.ts";
+import { indexDeliveredActions } from "./notifications.ts";
 export async function freezeReport(env: RuntimeEnv, report: Report) {
   const existing = await env.DB.prepare(
     "SELECT bundle_hash FROM runs WHERE id=?",
@@ -71,6 +72,7 @@ export async function previousReport(
   return file ? file.json<Report>() : undefined;
 }
 export async function cleanup(env: RuntimeEnv, now = new Date()) {
+  await indexDeliveredActions(env);
   const before = new Date(now.getTime() - 90 * 86400_000).toISOString();
   const old = await env.DB.prepare(
     "SELECT r.id FROM runs r LEFT JOIN deliveries d ON d.run_id=r.id WHERE r.completed_at<? AND r.bundle_hash IS NOT NULL AND (r.send_requested=0 OR d.state='delivered') LIMIT 20",
@@ -108,7 +110,7 @@ export async function cleanup(env: RuntimeEnv, now = new Date()) {
     .bind(year)
     .run();
   await env.DB.prepare(
-    "DELETE FROM runs WHERE completed_at<? AND state='frozen' AND bundle_hash IS NULL AND id NOT IN (SELECT run_id FROM deliveries)",
+    "DELETE FROM runs WHERE completed_at<? AND state='frozen' AND bundle_hash IS NULL AND id NOT IN (SELECT run_id FROM deliveries) AND id NOT IN (SELECT run_id FROM email_events)",
   )
     .bind(year)
     .run();

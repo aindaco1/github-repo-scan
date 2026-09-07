@@ -1,12 +1,5 @@
 import type { Collected, Context, Finding, Disposition } from "../types.ts";
-import { hash } from "../util.ts";
-const failures = new Set([
-  "failure",
-  "timed_out",
-  "action_required",
-  "startup_failure",
-  "stale",
-]);
+import { hash, failureConclusions as failures } from "../util.ts";
 export async function classify(
   c: Collected,
   context: Context = {},

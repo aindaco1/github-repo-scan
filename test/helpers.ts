@@ -1,5 +1,5 @@
 import { DatabaseSync } from "node:sqlite";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import type {
   Repo,
   Policy,
@@ -72,7 +72,10 @@ export const run = (changes: any = {}) => ({
 });
 export function testEnv() {
   const sqlite = new DatabaseSync(":memory:");
-  sqlite.exec(readFileSync("migrations/0001_initial.sql", "utf8"));
+  for (const file of readdirSync("migrations")
+    .filter((f) => f.endsWith(".sql"))
+    .sort())
+    sqlite.exec(readFileSync(`migrations/${file}`, "utf8"));
   const objects = new Map<string, string>();
   const make = (sql: string, args: any[] = []) => ({
     bind: (...args: any[]) => make(sql, args),

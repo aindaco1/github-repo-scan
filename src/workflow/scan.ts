@@ -10,6 +10,8 @@ import { buildReport } from "../scan.ts";
 import { freezeReport, previousReport, cleanup } from "../storage/database.ts";
 import { deliver } from "../email.ts";
 import { code } from "../util.ts";
+import { reportedActionKeys } from "../storage/notifications.ts";
+import { actionKeys } from "../report/notifications.ts";
 import type {
   RuntimeEnv,
   ScanParams,
@@ -154,6 +156,10 @@ export class ScanWorkflow extends WorkflowEntrypoint<RuntimeEnv, ScanParams> {
               gaps: setup.gaps,
               previous,
             });
+            const reported = new Set(await reportedActionKeys(this.env));
+            report.reportedActions = report.findings
+              .flatMap((f) => actionKeys(report, f))
+              .filter((key) => reported.has(key));
             await this.env.REPORTS.put(key, JSON.stringify(report));
           }
           await freezeReport(this.env, report);

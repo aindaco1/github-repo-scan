@@ -1,6 +1,7 @@
 import type { RuntimeEnv } from "./types.ts";
 import { hash } from "./util.ts";
 import type { renderReport } from "./report/render.ts";
+import { indexDeliveredActions } from "./storage/notifications.ts";
 type Rendered = ReturnType<typeof renderReport>;
 export type DeliveryState =
   | "prepared"
@@ -63,11 +64,8 @@ export async function deliver(env: RuntimeEnv, id: string) {
       headers: { "X-Dustwave-Automation": "github-repo-scan" },
       attachments: rendered.attachments.map((a) => ({
         filename: a.filename,
-        content: btoa(
-          Array.from(new TextEncoder().encode(a.content), (b) =>
-            String.fromCharCode(b),
-          ).join(""),
-        ),
+        // Binary content avoids the binding treating Base64 text as file bytes.
+        content: new TextEncoder().encode(a.content),
         type: "text/markdown; charset=utf-8",
         disposition: "attachment" as const,
       })),
@@ -188,4 +186,5 @@ export async function recordDeliveryEvent(env: RuntimeEnv, body: unknown) {
       delivery.run_id,
     ),
   ]);
+  await indexDeliveredActions(env, delivery.run_id);
 }

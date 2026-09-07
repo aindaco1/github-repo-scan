@@ -19,8 +19,13 @@ async function prepared() {
     subject: "Subject",
     html: "<p>Report</p>",
     text: "Report",
+    actionKeys: [],
     attachments: [
-      { filename: "report.md", content: "# Report\nPrivate fixture" },
+      {
+        filename: "report.md",
+        content:
+          "# Report\n\n## Résumé\n\n- [Review →](https://github.com/owner/repo)\n",
+      },
     ],
   });
   objects.set("reports/manual-1/email.json", email);
@@ -37,9 +42,15 @@ it("sends actual Markdown attachment and fixed identity exactly once on concurre
   await Promise.all([deliver(env, "manual-1"), deliver(env, "manual-1")]);
   expect(send).toHaveBeenCalledTimes(1);
   const message = send.mock.calls[0][0] as any;
-  expect(Buffer.from(message.attachments[0].content, "base64").toString()).toBe(
-    "# Report\nPrivate fixture",
+  expect(message.attachments[0].content).toBeInstanceOf(Uint8Array);
+  expect(
+    new TextDecoder("utf-8", { fatal: true, ignoreBOM: false }).decode(
+      message.attachments[0].content,
+    ),
+  ).toBe(
+    "# Report\n\n## Résumé\n\n- [Review →](https://github.com/owner/repo)\n",
   );
+  expect(message.attachments[0].type).toBe("text/markdown; charset=utf-8");
   expect(message.to).toBe(env.DIGEST_TO_EMAIL);
   expect(message.headers).toEqual({
     "X-Dustwave-Automation": "github-repo-scan",
