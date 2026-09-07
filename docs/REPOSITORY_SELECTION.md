@@ -18,6 +18,16 @@ This is the implementation contract for changing scan coverage. The default [pol
 
 The current defaults scan accessible private and public repositories of `aindaco1`, including forks, with archived repositories and `aindaco1/burque-presente` excluded. They also discover this project itself once the GitHub App can access it. Defaults are preferences the owner can change.
 
+## Required private-repository access
+
+Private-repository scanning is required in the first release, including discovery, Actions, issues, PRs, configured documentation and relevant artifacts. It uses authorized GitHub App installation tokens; the visibility of this source repository has no bearing on which target repositories those credentials can read.
+
+At setup, compare the App's discovered repository IDs to an authenticated owner inventory and retain the expected private target IDs only in private runtime state. Default discovery must reach every intended non-excluded private repository, not just one demonstration target. A selected-repositories App installation is acceptable only when its scope matches the user's selected policy; otherwise flag coverage as restricted/incomplete. Changes to the configured selection may require separately updating App access.
+
+Prove access with a real private-repository preview and positive/negative API coverage, including private repository metadata, Actions/jobs, issues, PRs and configured content/artifacts. Fixtures alone and a passing public-repository scan are insufficient. At every run, distinguish removed authorization, suspended installation, expired tokens and private 404 ambiguity from a repository with zero open work. Never use unauthenticated or public-only collection as a success fallback.
+
+Production evidence remains in private D1/R2 and the owner's email attachment. Public CI runs synthetic public/private fixtures with no production credential; live preview output, private names, IDs and links must never become public build artifacts or logs.
+
 ## Private repository settings
 
 Automatic discovery can scan accessible private repositories without publishing their names: discovery results and reports remain private. Never put private repository names, private documentation URLs, or sensitive dispositions in the public policy.
@@ -90,4 +100,4 @@ Codex receiving the attachment must honor that distinction and revalidate the cu
 
 ## Acceptance coverage
 
-Behavior tests must cover discovery versus selected mode; add/remove persistence; include/exclude conflicts; global/per-repo archive and fork precedence; empty scope; private access failures; unknown overrides; case/rename/transfer handling; invalid JSON or schema; policy changes during a run; archived historical reporting; and the same selection results through CLI and Worker. Settings checks must validate the committed default policy, and a live preview must show the selected set and reasons before schedule activation.
+Behavior tests must cover discovery versus selected mode; add/remove persistence; include/exclude conflicts; global/per-repo archive and fork precedence; empty scope; real private-target onboarding plus synthetic lost-access/empty-private-target distinctions; private access failures; unknown overrides; case/rename/transfer handling; invalid JSON or schema; policy changes during a run; archived historical reporting; and the same selection results through CLI and Worker. Settings checks must validate the committed default policy, and a live preview must show the selected set and reasons before schedule activation.

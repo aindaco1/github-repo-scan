@@ -8,18 +8,18 @@ Build a small Cloudflare service that sends a useful weekly maintenance report a
 
 | Decision | Specification |
 | --- | --- |
-| Repository coverage | Default: discover accessible `aindaco1` repositories, including private repos and forks. Configurable discovery owners, explicit inclusion/exclusion, and selected-only mode are defined in `config/scan.json`. |
+| Repository coverage | **Private-repository scanning is required for v1.** Default: discover accessible `aindaco1` repositories, including private repos and forks. Configurable discovery owners, explicit inclusion/exclusion, and selected-only mode are defined in `config/scan.json`. |
 | Exclusions | Defaults: archived repositories and `aindaco1/burque-presente`. Both are user-configurable; archived scanning supports a global setting or per-repository override. Filter before detail requests. |
 | Schedule | Sunday, 08:00 `America/Denver`, including daylight-saving changes |
-| Recipient | `DIGEST_TO_EMAIL`, kept in ignored local configuration and Cloudflare secrets |
-| Sender | `DIGEST_FROM_EMAIL`, verified with Resend and kept in private configuration; public display name `GitHub Repo Scan` |
-| Delivery | Resend transactional email: HTML, plain text, and an actual `.md` attachment |
+| Recipient | Opportunity Radar's existing `DIGEST_TO_EMAIL`, kept in ignored local configuration and Cloudflare secrets |
+| Sender | Opportunity Radar's existing `DIGEST_FROM_EMAIL`, kept in private configuration; display name `GitHub Repo Scan` |
+| Delivery | HTML, plain text, and an actual `.md` attachment using Opportunity Radar's conventions. Provider choice is pending; see `docs/EMAIL.md`. |
 | Runtime | Cloudflare Worker + Workflow + D1 + private R2 |
 | Source and operations | Public GitHub repository `aindaco1/github-repo-scan`; GitHub Actions for CI, deployment, manual operations, and a delivery watchdog |
 | v1 authority | GitHub reads only; writes only the radar's own state and its email to the configured recipient |
 | Model use | No language model required in v1. Evidence rules produce recommendations; Codex performs source-level investigation when handed the report. |
 
-Opportunity Radar currently uses Cloudflare Email Sending. This project will use Resend as requested. Verify the chosen sender domain with Resend before activation; do not assume an address configured for another provider is already verified there. Store sender/recipient settings privately and give this project its own API key. Do not change Opportunity Radar's email routing or reuse another product's credentials.
+Reuse Opportunity Radar's configured sender/recipient, digest presentation, local-time dates, recipient restrictions, and safe delivery/configuration conventions. [EMAIL.md](EMAIL.md) owns that contract and the pending provider decision: its current Cloudflare Email Sending setup versus the original Resend requirement. Until resolved, the Resend-specific implementation details below are conditional; do not provision either transport or introduce automatic provider fallback.
 
 Send a brief report even when nothing needs attention, so absence of mail is not confused with a healthy fleet. An incomplete scan must say **PARTIAL** or **FAILED**, including what could not be checked. Unchanged deferred work stays in a compact section instead of repeatedly becoming a top recommendation.
 
@@ -34,9 +34,9 @@ flowchart LR
   P[Reviewed policy and dispositions] --> W
   W --> D[(D1: runs, findings, delivery)]
   W --> R[(Private R2: frozen report bundle)]
-  R --> E[Resend email plus Markdown attachment]
+  R --> E[Selected email service plus Markdown attachment]
   E --> U[Owner hands attachment to Codex]
-  E --> H[Signed delivery webhook]
+  E --> H[Provider delivery evidence]
   H --> D
   A[GitHub watchdog] --> S[Minimal health endpoint]
   D --> S
@@ -54,7 +54,7 @@ Use `github-repo-scan` as the repository, local directory, package and Worker ba
 | This task's `scan.py` | Port its useful collection semantics and regression fixtures into TypeScript: exclusions, pagination, window subdivision, deduplication, and workflow scope. Keep one implementation shared by CLI and Worker. |
 | This task's `build_report.py` | Its repository assessments contain manual, hard-coded conclusions. Replace those with tested rules and reviewed dispositions; do not deploy the prose as a classifier. |
 
-Inspected source baselines: [Opportunity Radar `299aefa3`](https://github.com/aindaco1/dust-wave-opportunity-radar/tree/299aefa3b103abae6f263f7e85855f0dd5ac1d27), [Platform `bc3ea04e`](https://github.com/aindaco1/dust-wave-platform/tree/bc3ea04eac65a440f1c0ad7960b12157bf37ad66), and [Podcast `2d93615b`](https://github.com/aindaco1/dust-wave-podcast/tree/2d93615b97554156e0b6e1f3e0f0549696322b57). Platform's inspected `worker-core` version is `0.12.1`. Recheck the selected pin when implementing. Its consumer-adoption rules require exact versions, narrow interfaces, and independent rollback; no shared-library extraction is needed to start this radar.
+Inspected source baselines: [Opportunity Radar `299aefa3`](https://github.com/aindaco1/dust-wave-opportunity-radar/tree/299aefa3b103abae6f263f7e85855f0dd5ac1d27), [Platform `bc3ea04e`](https://github.com/aindaco1/dust-wave-platform/tree/bc3ea04eac65a440f1c0ad7960b12157bf37ad66), and [Podcast `2d93615b`](https://github.com/aindaco1/dust-wave-podcast/tree/2d93615b97554156e0b6e1f3e0f0549696322b57). Platform's inspected `worker-core` version is `0.12.1`. Recheck the selected pin when implementing. Its consumer-adoption rules require exact versions, narrow interfaces, and independent rollback; the already-shared primitives need no extraction. Email presentation reuse follows the narrow, characterized extraction described in [EMAIL.md](EMAIL.md).
 
 ## 3. Collection and evidence rules
 
@@ -63,6 +63,8 @@ Inspected source baselines: [Opportunity Radar `299aefa3`](https://github.com/ai
 Create a dedicated GitHub App installed on configured accounts. Prefer an all-repositories installation on `aindaco1` so new repositories appear automatically in discovery mode. Apply the user selection policy even when the App can access more repositories. Adding an owner or repository to configuration does not grant GitHub access; another account requires its own installation and authorization. Request repository **read** permissions for Actions, Contents, Issues, Pull requests, Checks, Commit statuses, and Deployments, plus Metadata. Do not request write permission. Confirm endpoint access in a private-repository smoke test; if branch protection/rule details require additional read permission, either justify it separately or mark required-check policy unknown.
 
 Use the App to obtain installation tokens in memory; refresh before expiry and never checkpoint tokens in Workflow outputs. GitHub documents installation repository discovery and one-hour installation tokens. Compare the first installation inventory with the owner's authenticated `gh` inventory during setup. Subsequent reports list additions, removals, inaccessible repositories, and whether installation coverage is restricted. The scanner cannot discover a private repository that the App was never allowed to see. [Installation repositories](https://docs.github.com/en/rest/apps/installations#list-repositories-accessible-to-the-app-installation), [installation tokens](https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-an-installation-access-token-for-a-github-app).
+
+Private access is a launch requirement, not an optional enhancement. The public scanner repository must authenticate independently as the GitHub App and read the selected private repositories with the same collection depth as public targets. Compare App discovery with an authenticated owner inventory at onboarding; store expected private target identities in private state, and never silently report a public-only scan as complete. Real private metadata/Actions/issues/PR/content access and lost-access behavior are acceptance gates. See [required private access](REPOSITORY_SELECTION.md#required-private-repository-access).
 
 ### User-controlled repository selection
 
@@ -136,6 +138,8 @@ Freeze and send at approximately 08:00; if the collection deadline is reached, r
 
 ### Report and attachment
 
+Apply [the Opportunity Radar email contract](EMAIL.md). The following Resend API details apply only if Resend remains the selected transport; use that contract's separate Cloudflare semantics otherwise.
+
 Generate all output formats from **one validated report object**, with one source of truth for counts, links, states and next steps. The email leads with coverage, changed findings, the top recommended actions, human/acceptance blockers, and a compact unchanged/deferred summary. Its attachment includes the complete inventory of PRs/issues and actionable findings, evidence timestamps/SHAs, canonical docs, exclusions, uncertainty, and the Codex operating brief shown in the companion example.
 
 Attach UTF-8 Markdown bytes through Resend's base64 `content` field and a dated `filename`; use the single-email endpoint. Resend documents attachments and does not support them on its batch endpoint. Do not make private reports publicly downloadable just to attach them. [Resend attachments](https://resend.com/docs/dashboard/emails/attachments).
@@ -152,9 +156,11 @@ Keep report bundles for 90 days and minimal run/finding/delivery history for one
 
 Expose a minimal `/health` response containing radar freshness and delivery state, without private repository names, findings, or recipient details. Provide authenticated operator routes for preview, run status, report download and same-run recovery. A GitHub Actions watchdog checks health Sunday at 18:00 UTC, after the Denver delivery window in either season. It does not run a second fleet scan or resend mail. Fail on missing/partial coverage, delivery failure, or missing delivery confirmation; provide a link to the radar run without private report content.
 
-Verify the owner's GitHub failed-workflow notifications during setup. This creates an independent alert when Cloudflare or Resend is unavailable. Scheduled workflows in public repositories can be disabled after 60 days without activity; the proposed radar repository is private, but the runbook should still cover disabled-watchdog recovery. Do not claim an HTTP 200 alone proves the weekly scan or email succeeded. [GitHub workflow disabling](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/disable-and-enable-workflows).
+Verify the owner's GitHub failed-workflow notifications during setup. This creates an independent alert when Cloudflare or Resend is unavailable. Scheduled workflows in public repositories can be disabled after 60 days without activity; this radar repository is public, so the runbook must verify the watchdog remains enabled and cover inactivity-related recovery. Do not claim an HTTP 200 alone proves the weekly scan or email succeeded. [GitHub workflow disabling](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/disable-and-enable-workflows).
 
 ## 5. Secrets and deployment configuration
+
+Only provision the chosen provider's settings. The Resend key/webhook rows below apply if Resend is retained; the Cloudflare choice uses its own restricted `EMAIL` binding and provider evidence described in [EMAIL.md](EMAIL.md).
 
 Use the shared Platform secret audit and the same separation of Worker runtime secrets, GitHub deployment credentials, and ignored local settings used by other Dust Wave projects. Account inventories and personal delivery settings stay out of the public repository. See [SECURITY.md](SECURITY.md) for implemented checks and publication boundaries.
 
@@ -210,11 +216,11 @@ Provide `npm run check` for docs/config validation, typecheck, meaningful tests,
 
 Add GitHub App configuration and private-repository access verification, complete pagination, workflow scope comparison, evidence adapters, dispositions, and bounded failure handling. Compare a live preview with a fresh independent `gh` inventory, including exclusions and every open issue/PR. Use this task's historical cases as regression data, not as current facts.
 
-**Acceptance:** each observed finding has valid source links, times, scope and next action; partial/error conditions remain visible; current PR heads and relevant workflow paths cannot be confused; no GitHub mutation occurs.
+**Acceptance:** each observed finding has valid source links, times, scope and next action; partial/error conditions remain visible; current PR heads and relevant workflow paths cannot be confused; no GitHub mutation occurs. An authenticated owner-vs-App inventory comparison accounts for every intended private target, and a live private-target preview proves the required APIs work. Private access loss and a legitimately empty private repo produce different outcomes. Live private evidence is retained privately; public CI uses synthetic fixtures only.
 
-### C. Durable schedule and Resend delivery
+### C. Durable schedule and Opportunity Radar email integration
 
-Provision the radar's D1, private R2, Worker/Workflow and dedicated credentials. Add migration/deployment workflows, report outbox, verified webhook handler, local-time schedule gate, protected manual preview/recovery and watchdog. Deploy with `SCHEDULE_ENABLED=false` and `SEND_ENABLED=false` first.
+Resolve the provider decision in [EMAIL.md](EMAIL.md), then provision the radar's D1, private R2, Worker/Workflow and only the credentials/bindings required for that selected provider. Add migration/deployment workflows, report outbox, verified webhook handler, local-time schedule gate, protected manual preview/recovery and watchdog. Deploy with `SCHEDULE_ENABLED=false` and `SEND_ENABLED=false` first.
 
 **Acceptance:** prove duplicate scheduled ticks and interrupted steps recover without duplicate report delivery; retry bytes stay identical; an expired ambiguous send stops; invalid webhooks fail; one inaccessible repository does not erase the other results. Run an owner-authorized test email to the agreed recipient, open its attachment in Codex, and verify mail-server delivery independently of API acceptance.
 
@@ -237,6 +243,7 @@ Rollback: disable scheduling/sending, retain state for reconciliation, restore t
 | Policy changes mid-run, case changes, repo rename, deployment contains stale settings | Run uses one validated commit snapshot; stable repo identity retains exclusions; next run sees merged policy without redeploy |
 | Repository removed from scope | Report coverage change; preserve findings/history as out of scope, not resolved |
 | Pagination over 100 items, run search at/over 1,000, changing pages | Complete, deduplicated result or explicit partial coverage; no infinite time subdivision |
+| Private onboarding vs owner inventory; public source/private targets | Every intended private target accounted for; positive private API checks pass; evidence stays private |
 | Private permission lost, token expires, 429/503, missing artifact | Correct retry/recovery or unknown state; never an all-clear |
 | Dust Wave New audit 503 followed by equivalent passing deployment/audit | Historical failure resolved; no advice to bypass audit |
 | Podcast Node entrypoint fails while unit tests pass | Recommend exercising the actual CLI path; do not treat unrelated tests as closure |
@@ -274,8 +281,9 @@ The companion [EXAMPLE_CODEX_HANDOFF.md](EXAMPLE_CODEX_HANDOFF.md) demonstrates 
 
 The production renderer must generate its own current timestamps, IDs, inventory, evidence, tasks, and unknowns from the report schema. It must not depend on this conversation, a particular Mac path, or an expiring report URL. Codex revalidates facts before acting and reads the current repository instructions. The trusted operating brief is static reviewed code; issue text, logs and downloaded content are data, never executable instructions or authorization.
 
-- [ ] Sender choice recorded; recipient and Denver schedule confirmed.
+- [ ] Opportunity Radar's existing sender/recipient retained privately; email provider decision recorded; shared digest presentation characterized.
 - [x] Project name and public repository target: `github-repo-scan`; source checkout in iCloud Drive.
+- [ ] Mandatory private-target access verified against owner inventory, with live preview and revoked-access coverage.
 - [ ] App access, resource bindings and secret ownership documented.
 - [ ] One active scan policy source, easy add/remove/archive controls and inclusion preview implemented and verified.
 - [ ] One collector and one report object serve local preview and Cloudflare.
