@@ -62,7 +62,7 @@ export async function previousReport(
   currentId: string,
 ): Promise<Report | undefined> {
   const row = await env.DB.prepare(
-    "SELECT id FROM runs WHERE id!=? AND bundle_hash IS NOT NULL ORDER BY completed_at DESC LIMIT 1",
+    "SELECT r.id FROM runs r JOIN deliveries d ON d.run_id=r.id WHERE r.id!=? AND r.bundle_hash IS NOT NULL AND d.state='delivered' ORDER BY r.completed_at DESC LIMIT 1",
   )
     .bind(currentId)
     .first<{ id: string }>();

@@ -2,7 +2,7 @@
 
 Weekly GitHub maintenance reports with evidence links, recommendations and a Markdown handoff for Codex. Runs on Cloudflare using a read-only GitHub App and Cloudflare Email Sending, with Opportunity Radar's shared digest presentation.
 
-Private-repository scanning is required and implemented. The public source contains no live scan data. Defaults discover owner repositories and forks, excluding archived repositories and `burque-presente`; all of these choices are editable. The agreed schedule is Sunday at 08:00 America/Denver.
+Private-repository scanning is required and implemented. The public source contains no live scan data. Defaults discover owner repositories and forks, excluding archived repositories and `burque-presente`; all of these choices are editable. Sunday delivery is enabled for 08:00 America/Denver, starting September 13, 2026. A real test report has been delivered; the first scheduled cycles are still pending.
 
 ## Use it
 
@@ -10,6 +10,7 @@ Private-repository scanning is required and implemented. The public source conta
 git submodule update --init --recursive
 npm ci
 npm run check
+npm run radar -- preview --fixture test/fixtures/scan.json
 npm run radar -- repos list --all --private
 npm run radar -- scan --preview --private
 ```
