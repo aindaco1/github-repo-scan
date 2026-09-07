@@ -24,7 +24,7 @@ flowchart LR
 - `src/report/render.ts`: one report becomes HTML, plain text and complete Codex Markdown, with frozen hashes. External text is escaped and source URLs restricted to GitHub.
 - `src/workflow/scan.ts`: per-repository checkpoints and frozen report orchestration. Tokens stay in memory, never in step results. A deadline produces explicit coverage gaps; missing policy/onboarding fails the run.
 - `src/email.ts`: outbox claim, fixed recipient, Cloudflare attachment send and delivery-event reconciliation. Provider acceptance and delivery are distinct states.
-- `src/storage/database.ts`: additive D1 storage, immutable report bundles and conservative retention.
+- `src/storage/database.ts`: additive D1 storage, immutable report bundles, a last-delivered comparison baseline and conservative retention. Previews never consume changes awaiting delivery.
 - `src/index.ts`: authenticated operator endpoints, public minimal health, schedule and queue entry points.
 - `scripts/radar.ts`: local policy editing, private preview, onboarding and authenticated operator commands.
 

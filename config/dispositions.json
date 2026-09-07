@@ -1,1 +1,54 @@
-[]
+[
+  {
+    "findingId": "1310213312:actions:323352322:workflow_dispatch:main",
+    "signature": "b3b0c5f8292aca4a5e374c0f0640e1fc90f6b48daa042bd2e1de21334c38f2b4",
+    "state": "resolved",
+    "reference": {
+      "repository": "aindaco1/dust-wave-podcast",
+      "path": "docs/CURRENT_STATE.md",
+      "sha256": "ee6412cb83c2d33c4ab3d10c2e306737f4d1c2a84b53d580f7b1468339843dbf"
+    },
+    "url": "https://github.com/aindaco1/dust-wave-podcast/blob/main/docs/CURRENT_STATE.md",
+    "reason": "The historical callback incident is repaired and deployed. The saved job has all 10,176 words and a completion audit despite the old red run. No new patch or model rerun is needed for this incident. A later green alignment workflow, bilingual H1 benchmark and human approval remain separate acceptance gaps.",
+    "revisitAt": "2026-10-07T14:00:00Z"
+  },
+  {
+    "findingId": "1310213312:actions:325054865:schedule:main",
+    "signature": "fc2bf88df5c01b15063270df1610a5523452cd8089d7fffe782abe29feb4adf2",
+    "state": "deferred",
+    "reference": {
+      "repository": "aindaco1/dust-wave-podcast",
+      "path": "docs/CURRENT_STATE.md",
+      "sha256": "ee6412cb83c2d33c4ab3d10c2e306737f4d1c2a84b53d580f7b1468339843dbf"
+    },
+    "url": "https://github.com/aindaco1/dust-wave-podcast/blob/main/docs/CURRENT_STATE.md",
+    "reason": "The extensionless-import repair and subprocess regressions are deployed, and the protected refresh passes. Await fresh scheduled evidence in this same scope; do not propose the completed import repair again. A new failing run reopens this review.",
+    "revisitAt": "2026-10-07T14:00:00Z"
+  },
+  {
+    "findingId": "1310213312:actions:325401969:schedule:main",
+    "signature": "aac77d2942583f2f302fa43adeba1a0c72b6d5d0c9b2059610e630b1cbddda20",
+    "state": "deferred",
+    "reference": {
+      "repository": "aindaco1/dust-wave-podcast",
+      "path": "docs/CURRENT_STATE.md",
+      "sha256": "ee6412cb83c2d33c4ab3d10c2e306737f4d1c2a84b53d580f7b1468339843dbf"
+    },
+    "url": "https://github.com/aindaco1/dust-wave-podcast/blob/main/docs/CURRENT_STATE.md",
+    "reason": "The extensionless-import repair and subprocess regressions are deployed, and the protected rehearsal passes. Await fresh scheduled evidence in this same scope; do not propose the completed import repair again. A new failing run reopens this review.",
+    "revisitAt": "2026-10-07T14:00:00Z"
+  },
+  {
+    "findingId": "1089024937:actions:345662769:push:main",
+    "signature": "0be4137f5f419fdb5b600562d0bbfd5763157289aa2a569a19280494871a3f13",
+    "state": "deferred",
+    "reference": {
+      "repository": "aindaco1/zema-landing",
+      "path": "docs/OPERATIONS.md",
+      "sha256": "3ab7d30e7069a1756af1a5f581177fd175ffeec770137cdbf2c5f65aaab197e0"
+    },
+    "url": "https://github.com/aindaco1/zema-landing/blob/main/docs/OPERATIONS.md",
+    "reason": "The owner deferred end-to-end media release acceptance on September 6. Current automated checks passed after the historical workflow expression repair. Revisit on an actual upload/publication failure; do not perform a speculative production upload. This does not establish end-to-end acceptance.",
+    "revisitAt": "2026-10-07T14:00:00Z"
+  }
+]

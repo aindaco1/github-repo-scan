@@ -6,7 +6,11 @@ import { resolveSelection } from "../src/selection.ts";
 import { renderReport, renderBundle } from "../src/report/render.ts";
 import { readArtifactZip, interpretArtifact } from "../src/github/artifacts.ts";
 import { weeklySlot, lastDueSlot } from "../src/schedule.ts";
-import { freezeReport, cleanup } from "../src/storage/database.ts";
+import {
+  freezeReport,
+  cleanup,
+  previousReport,
+} from "../src/storage/database.ts";
 import { repo, policy, collected, run, testEnv } from "./helpers.ts";
 async function report() {
   const r = repo(1, { private: true });
@@ -220,4 +224,25 @@ it("does not confuse healthy freshness with incomplete scheduled acceptance", ()
   expect(() =>
     interpretArtifact("scheduled-health", { ...value, verified_cycles: 3 }),
   ).toThrow("artifact_inconsistent_summary");
+});
+
+it("a preview cannot consume changes before the recipient receives them", async () => {
+  const { env, objects } = testEnv();
+  for (const [id, date, send] of [
+    ["sent", "2026-09-01", 1],
+    ["preview", "2026-09-07", 0],
+  ] as const) {
+    await env.DB.prepare(
+      "INSERT INTO runs(id,scheduled_at,started_at,completed_at,send_requested,bundle_hash) VALUES (?,?,?,?,?,?)",
+    )
+      .bind(id, date, date, date, send, "hash")
+      .run();
+    objects.set(`reports/${id}/report.json`, JSON.stringify({ id }));
+  }
+  await env.DB.prepare(
+    "INSERT INTO deliveries(run_id,subject,recipient_hash,payload_hash,state,updated_at) VALUES (?,?,?,?,?,?)",
+  )
+    .bind("sent", "subject", "recipient", "payload", "delivered", "2026-09-01")
+    .run();
+  expect((await previousReport(env, "next"))?.id).toBe("sent");
 });

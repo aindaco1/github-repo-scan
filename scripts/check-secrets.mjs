@@ -69,6 +69,8 @@ function main() {
       const local = JSON.parse(readFileSync(resolve(root, '.private/runtime-secrets.json'), 'utf8'));
       exactValues = Object.entries(local).filter(([name,value]) => /(?:TOKEN|PRIVATE_KEY|_EMAIL)$/.test(name) && typeof value === 'string' && value.length >= 8).flatMap(([,value]) => [value, JSON.stringify(value).slice(1,-1)]);
     } catch (error) { if(error.code !== 'ENOENT') throw error; }
+    try { const token = readFileSync(resolve(root, '.private/cloudflare-deploy.token'), 'utf8').trim(); if (token.length >= 20) exactValues.push(token); }
+    catch (error) { if(error.code !== 'ENOENT') throw error; }
     for (const path of git(root, ['ls-files', '-z']).split('\0').filter(Boolean)) {
       try { if (exactValues.some(value => readFileSync(resolve(root,path),'utf8').includes(value))) {console.error(`${path}: Exact local sensitive value detected; value withheld.`);ok=false;} }
       catch (error) { if (error.code !== 'EISDIR') throw error; }
