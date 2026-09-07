@@ -1,0 +1,11 @@
+{
+  "$schema": "./scan.schema.json",
+  "schemaVersion": 1,
+  "mode": "discover",
+  "owners": ["aindaco1"],
+  "include": [],
+  "exclude": ["aindaco1/burque-presente"],
+  "includeArchived": false,
+  "includeForks": true,
+  "overrides": {}
+}

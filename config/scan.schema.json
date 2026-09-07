@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "github-repo-scan repository selection",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "mode", "owners", "include", "exclude", "includeArchived", "includeForks", "overrides"],
+  "properties": {
+    "$schema": {"type": "string"},
+    "schemaVersion": {"const": 1},
+    "mode": {"enum": ["discover", "selected"]},
+    "owners": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?$"}
+    },
+    "include": {"$ref": "#/$defs/repositories"},
+    "exclude": {"$ref": "#/$defs/repositories"},
+    "includeArchived": {"type": "boolean"},
+    "includeForks": {"type": "boolean"},
+    "overrides": {
+      "type": "object",
+      "propertyNames": {"$ref": "#/$defs/repository"},
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "minProperties": 1,
+        "properties": {
+          "includeArchived": {"type": "boolean"},
+          "includeForks": {"type": "boolean"}
+        }
+      }
+    }
+  },
+  "$defs": {
+    "repository": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?/[A-Za-z0-9_.-]+$"
+    },
+    "repositories": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/repository"}
+    }
+  }
+}

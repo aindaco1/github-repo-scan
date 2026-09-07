@@ -1,0 +1,17 @@
+.DS_Store
+.env
+.env.*
+!.env.example
+.dev.vars
+.dev.vars.*
+*.pem
+*.key
+node_modules/
+.wrangler/
+dist/
+coverage/
+outputs/
+reports/
+*.log
+.private/
+*.bundle

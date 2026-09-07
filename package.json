@@ -1,0 +1,12 @@
+{
+  "name": "github-repo-scan",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {"node": ">=24"},
+  "scripts": {
+    "security:secrets": "node scripts/check-secrets.mjs",
+    "test": "node --test test/*.test.mjs",
+    "check": "npm run security:secrets && npm test"
+  }
+}
