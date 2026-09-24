@@ -1,75 +1,7 @@
 import { DatabaseSync } from "node:sqlite";
 import { readFileSync, readdirSync } from "node:fs";
-import type {
-  Repo,
-  Policy,
-  Collected,
-  RuntimeEnv,
-  Report,
-} from "../src/types.ts";
-export const repo = (id = 1, changes: Partial<Repo> = {}): Repo => ({
-  id,
-  full_name: `owner/repo-${id}`,
-  private: false,
-  archived: false,
-  fork: false,
-  default_branch: "main",
-  owner: { login: "owner" },
-  html_url: `https://github.com/owner/repo-${id}`,
-  has_issues: true,
-  size: 1,
-  ...changes,
-});
-export const policy = (changes: Partial<Policy> = {}): Policy => ({
-  schemaVersion: 1,
-  mode: "discover",
-  owners: ["owner"],
-  include: [],
-  exclude: [],
-  includeArchived: false,
-  includeForks: true,
-  overrides: {},
-  ...changes,
-});
-export const collected = (changes: Partial<Collected> = {}): Collected => ({
-  repo: repo(),
-  headSha: "current",
-  observedAt: "2026-09-07T14:00:00Z",
-  branches: ["main"],
-  workflows: [
-    {
-      id: 1,
-      path: ".github/workflows/test.yml",
-      name: "Test",
-      state: "active",
-    },
-  ],
-  runs: [],
-  jobs: {},
-  prs: [],
-  issues: [],
-  docs: [],
-  artifacts: [],
-  gaps: [],
-  requests: 0,
-  ...changes,
-});
-export const run = (changes: any = {}) => ({
-  id: 5,
-  attempt: 1,
-  workflowId: 1,
-  path: ".github/workflows/test.yml",
-  name: "Test",
-  event: "push",
-  branch: "main",
-  sha: "abc",
-  status: "completed",
-  conclusion: "failure",
-  createdAt: "2026-09-06T12:00:00Z",
-  url: "https://github.com/owner/repo-1/actions/runs/5",
-  pullNumbers: [],
-  ...changes,
-});
+import type { RuntimeEnv, Report } from "../src/types.ts";
+export { repo, policy, collected, run } from "./fixtures/builders.ts";
 export function testEnv() {
   const sqlite = new DatabaseSync(":memory:");
   for (const file of readdirSync("migrations")

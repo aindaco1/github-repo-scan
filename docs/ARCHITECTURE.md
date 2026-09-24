@@ -29,7 +29,7 @@ flowchart LR
 - `src/index.ts`: authenticated operator endpoints, public minimal health, schedule and queue entry points.
 - `scripts/radar.ts`: local policy editing, private preview, onboarding and authenticated operator commands.
 
-Platform `@dustwave/digest-core` 0.1.0 comes from commit `4992520`. The scanner reuses its escaping and compact text helpers with its own summary layout; Opportunity Radar keeps the card renderer. Platform's worker-core provides timezone, bounded fetch and authentication comparison helpers. Notification receipts and report content remain consumer-owned.
+Platform is pinned at `60d439b`: `@dustwave/digest-core` 0.1.0 and Worker Core 0.15.0 serve the runtime; Test Core 0.3.0 serves development checks. The scanner reuses digest escaping and compact text helpers with its own summary layout; Opportunity Radar keeps the card renderer. Worker Core provides timezone, bounded fetch and authentication comparison helpers. Notification receipts and report content remain consumer-owned. [Jev evaluation](JEV_EVALUATION.md) reuses the shared development adapter and the real report path with public synthetic fixtures.
 
 ## Coverage and acceptance
 

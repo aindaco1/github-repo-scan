@@ -4,7 +4,7 @@ The scanner uses Cloudflare Email Sending. It requires no Resend credential.
 
 ## Local development
 
-Use Node 24 or newer, initialize the pinned submodule, and run `npm ci`. `npm run dev` starts a local Worker with scheduling and sending disabled. `npm run check` validates settings, secrets/history, types, tests, dependency audit and a dry Worker build. Tests use synthetic data and require no credentials.
+Use Node 24 or newer, initialize the pinned submodule, and run `npm ci`. `npm run dev` starts a local Worker with scheduling and sending disabled. `npm run check` validates the exact Platform pin, settings, secrets/history, types, tests, dependency audit and a dry Worker build. Tests use synthetic data and require no credentials. Optional live semantic checks have separate process credentials and commands in [Jev evaluation](JEV_EVALUATION.md); they do not run in ordinary CI.
 
 Ignored `.dev.vars` contains local settings. The local operator tools also read `.private/runtime-secrets.json`, generated during App setup. Never commit either file or show their values in CI. `.env.example` documents names only. App registration uses `node scripts/register-app.mjs`; GitHub names the App **Dust Wave Repo Scan** because App names cannot begin with GitHub. The product/repository remains `github-repo-scan`.
 

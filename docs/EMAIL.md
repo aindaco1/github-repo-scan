@@ -8,6 +8,8 @@ The scanner owns a single-column summary: headings, bullet points, source links 
 
 HTML, plain text and the Codex Markdown derive from one report and the same notification selection. Every open issue and PR remains visible, with no top-eight truncation. The Markdown contains readable UTF-8 headings, evidence, recommendations, quoted issue/PR bodies and a repository-selection appendix. Each attachment is at most 512 KiB; larger reports partition by repository and repeat the operating brief and selection. Exceeding the total message budget fails visibly rather than dropping content.
 
+HTML and plain-text email share the same empty-result warning when collection is incomplete. Missing results with access errors must not imply that no open work remains. The [Jev development trial](JEV_EVALUATION.md#september-24-2026-local-trial) identified and regression-tested the plain-text omission.
+
 ## Failed Actions appear once
 
 A failed run is identified by stable repository ID, run ID and attempt. Once a report containing it is confirmed delivered, later emails and Markdown attachments omit that same failed run, even if repository names, source, recommendations or triage states change. A new failed run or failed retry is new evidence. This is notification suppression, not resolution: the complete private report JSON retains all findings.
