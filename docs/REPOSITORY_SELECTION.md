@@ -18,6 +18,8 @@ This is the implementation contract for changing scan coverage. The default [pol
 
 The current defaults scan accessible private and public repositories of `aindaco1`, including forks, with archived repositories and `aindaco1/burque-presente` excluded. They also discover this project itself once the GitHub App can access it. Defaults are preferences the owner can change.
 
+Discovery refreshes the GitHub App's repository inventory at the start of every fresh local or hosted scan, including scheduled runs. Newly created, non-archived repositories under a configured owner are automatically selected unless explicitly excluded or filtered by the fork setting; no `repos add`, policy publication or Worker deployment is needed. This requires the owner's App installation to cover **all repositories**, including future repositories. The saved onboarding inventory checks for lost access; it is not a fixed allowlist. A repository created after a run takes its inventory snapshot appears on the next fresh run.
+
 ## Required private-repository access
 
 Private-repository scanning is required in the first release, including discovery, Actions, issues, PRs, configured documentation and relevant artifacts. It uses authorized GitHub App installation tokens; the visibility of this source repository has no bearing on which target repositories those credentials can read.
