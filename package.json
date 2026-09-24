@@ -9,7 +9,7 @@
   "scripts": {
     "security:secrets": "node scripts/check-secrets.mjs",
     "test": "node --test test/*.test.mjs && vitest run",
-    "check": "npm run docs:check && npm run config:check && npm run security:secrets && npm run typecheck && npm test && npm audit --audit-level=high && npm run deploy:dry",
+    "check": "npm run platform:check && npm run docs:check && npm run config:check && npm run security:secrets && npm run typecheck && npm test && npm audit --audit-level=high && npm run deploy:dry",
     "radar": "node --import tsx scripts/radar.ts",
     "schema:generate": "node scripts/generate-schema.mjs",
     "config:check": "node --import tsx scripts/check-config.ts",
@@ -20,7 +20,9 @@
     "deploy": "node --import tsx scripts/deploy.ts",
     "dev": "wrangler dev --test-scheduled",
     "docs:check": "node scripts/check-docs.mjs",
-    "migrate:remote": "node --import tsx scripts/migrate.ts"
+    "migrate:remote": "node --import tsx scripts/migrate.ts",
+    "jev": "node --import tsx scripts/jev.ts",
+    "platform:check": "node scripts/check-platform.mjs"
   },
   "dependencies": {
     "@dustwave/digest-core": "file:shared/dust-wave-platform/packages/digest-core",
@@ -36,7 +38,8 @@
     "tsx": "4.23.13",
     "typescript": "7.0.2",
     "vitest": "4.1.11",
-    "wrangler": "4.131.2"
+    "wrangler": "4.131.2",
+    "@dustwave/test-core": "file:shared/dust-wave-platform/packages/test-core"
   },
   "allowScripts": {
     "esbuild@0.28.1": true,

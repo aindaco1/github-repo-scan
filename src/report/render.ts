@@ -74,6 +74,8 @@ export function renderReport(report: Report) {
   const intro = `${coverage} ${report.coverage.status === "empty" ? "No repositories selected." : "The attachment contains the Codex handoff and full open issue/PR inventory."}`;
   const notificationNote =
     "Failed runs appear once after confirmed email delivery. New failed runs or retries appear again; open issues and PRs remain until closed. Previously reported failures may still be unresolved.";
+  const emptyMessage = (message: string) =>
+    `${message}${report.coverage.gaps.length ? " Coverage is incomplete; see the gaps below." : ""}`;
   const stateLabel = (f: Finding) =>
     f.state === "resolved" && ["issue", "pull_request"].includes(f.kind)
       ? "reviewed as resolved; still open on GitHub"
@@ -95,7 +97,7 @@ ${sections
   .filter((s) => s.items.length || s.empty)
   .map(
     (s) => `<h2 style="font-size:21px;margin:28px 0 10px;">${s.title}</h2>
-${s.items.length ? `<ul style="padding-left:24px;">${s.items.map((f) => `<li style="margin:0 0 16px;"><strong>${escapeHtml(f.repository)}</strong> — ${htmlLink(f.title, f.evidence[0]?.url)}<br><span style="color:#5f6368;">${escapeHtml(stateLabel(f))}</span>. ${escapeHtml(compact(f.recommendation, 380))}</li>`).join("\n")}</ul>` : `<p>${s.empty}${report.coverage.gaps.length ? " Coverage is incomplete; see the gaps below." : ""}</p>`}`,
+${s.items.length ? `<ul style="padding-left:24px;">${s.items.map((f) => `<li style="margin:0 0 16px;"><strong>${escapeHtml(f.repository)}</strong> — ${htmlLink(f.title, f.evidence[0]?.url)}<br><span style="color:#5f6368;">${escapeHtml(stateLabel(f))}</span>. ${escapeHtml(compact(f.recommendation, 380))}</li>`).join("\n")}</ul>` : `<p>${emptyMessage(s.empty)}</p>`}`,
   )
   .join("\n")}
 ${report.coverage.gaps.length ? `<h2 style="font-size:21px;margin-top:28px;">Coverage gaps</h2><ul>${report.coverage.gaps.map((g) => `<li>${escapeHtml(g.repository ?? "Inventory")}: ${escapeHtml(g.area)} — ${escapeHtml(g.code)}</li>`).join("\n")}</ul>` : ""}
@@ -152,7 +154,7 @@ ${report.coverage.gaps.length ? `<h2 style="font-size:21px;margin-top:28px;">Cov
                   `- ${f.repository}: ${f.title} (${stateLabel(f)})\n  ${f.recommendation}\n  ${f.evidence[0]?.url ?? ""}`,
               )
               .join("\n\n")
-          : s.empty,
+          : emptyMessage(s.empty),
       ]),
     notificationNote,
     "Full evidence and the open issue/PR inventory are attached.",

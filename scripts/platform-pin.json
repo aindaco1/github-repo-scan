@@ -1,0 +1,8 @@
+{
+  "commit": "60d439b887f1244f82ff232c849d74152b28c776",
+  "packages": {
+    "digest-core": "0.1.0",
+    "worker-core": "0.15.0",
+    "test-core": "0.3.0"
+  }
+}

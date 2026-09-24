@@ -28,6 +28,14 @@ The current deployment uses one complete private R2 policy bundle because some c
 
 `npm run deploy` uses local Wrangler authentication; the GitHub deployment workflow uses an account-scoped deployment token and private derived configuration. Neither path needs scanned-repository write permission. Routine deployment must not alter Opportunity Radar's inbound routes or credentials.
 
+For routine releases, merge a reviewed pull request after the required `check`
+status passes, then dispatch [Deploy scanner](https://github.com/aindaco1/github-repo-scan/actions/workflows/deploy.yml)
+on `main`. This runs the same checks, applies ordered migrations and deploys
+through the protected production environment. Record the source SHA, workflow
+run and active Cloudflare deployment privately. Check `/health` and complete an
+authenticated hosted preview with `send: false`; verify its frozen manifest and
+rendered output. A deployment preview does not establish new email delivery.
+
 ## Health and recovery
 
 `/health` exposes only service freshness, due slot, coverage state and delivery state. It excludes repository names, report contents, recipients and provider IDs. GitHub checks it Sunday at 18:00 UTC, after the Denver delivery window in either season. The watchdog must fail on missing/partial coverage or missing delivery confirmation. Before the first scheduled date it reports that scheduled acceptance is pending. GitHub's public-repository schedule can be disabled after 60 days of inactivity; verify the watchdog remains enabled and re-enable it if needed. The owner's GitHub Actions notification setting was verified on September 7: email for failed workflows only. The watchdog uses GitHub's existing notification route; the digest uses the existing Opportunity Radar recipient.
@@ -44,6 +52,16 @@ Retain report bundles for 90 days. Never delete a bundle with unresolved deliver
 
 To stop the service, set `SCHEDULE_ENABLED=false` and `SEND_ENABLED=false` in private deployment configuration and deploy. Preserve D1/R2 for reconciliation. Restore the previous Worker version if needed; migrations remain additive. Changing the Platform pin affects this consumer only. App/key rotation, uncertain-email recovery and report deletion are separate operations.
 
+After a verified release, remove reproducible `dist/` output and temporary
+validation checkouts. Keep `node_modules/`, the pinned Platform checkout, test
+fixtures, local Wrangler state, private credentials/configuration, Jev evidence,
+and report/delivery records needed for regression work or rollback. Keep the
+Platform development dependencies when running its suite locally. Delete a branch
+only after verifying it is merged, has no open pull request and is not checked out
+in another worktree. Recovered refs whose commits are already in `main` can be
+removed. Do not use blanket `git clean` or delete operational R2/D1 data as local
+build cleanup.
+
 ## Acceptance record
 
 The September 7 setup verified the App against 41 owner repositories, including all 7 private repositories. Default exclusions produced 33 selected repositories, including 2 private targets. A live local preview and a hosted preview both completed with zero collection gaps. These are dated acceptance observations, not fixed scope counts or a claim that all projects are healthy.
@@ -52,10 +70,19 @@ The shared presentation passed source characterization in Platform and Opportuni
 
 The scanner's [initial implementation CI](https://github.com/aindaco1/github-repo-scan/actions/runs/34152377562) passed. Its real hosted scan on September 7 read 33 repositories, including 2 private targets, 2,767 workflow runs, 1 open PR and 6 open issues with zero coverage gaps. Cloudflare confirmed delivery at **18:42:45 UTC**. The privately downloaded HTML, text and Markdown matched the frozen manifest. The subsequently supplied received attachment exposed an extra Base64 encoding: downloaded R2 bytes alone had not established correct email-attachment bytes. The correction and summary layout are covered in [Email](EMAIL.md). Run, message and provider event identifiers are retained privately.
 
-The [protected GitHub deployment](https://github.com/aindaco1/github-repo-scan/actions/runs/34153091362) succeeded using a dedicated account-scoped Workers Scripts/D1/Queues token. Scheduling and sending are enabled. First delivery is **Sunday September 13 at 08:00 America/Denver**; the next cycle is September 20. Two real Sunday deliveries remain pending operational acceptance. Manual scans, the successful test email and timezone tests do not satisfy that gate.
+The [protected GitHub deployment](https://github.com/aindaco1/github-repo-scan/actions/runs/34153091362) succeeded using a dedicated account-scoped Workers Scripts/D1/Queues token. Scheduling and sending are enabled. The initial scheduled slots were **September 13 and 20 at 08:00 America/Denver**. On September 24, authenticated run records confirmed both completed with `coverage_status: complete` and provider delivery events at **14:00:09.143 UTC** and **14:00:09.296 UTC**, respectively. These real consecutive Sunday deliveries satisfy the initial operational observation gate. A fresh health read returned HTTP 200, complete coverage and confirmed delivery for the latest due slot; scheduling and sending remained enabled. This dated observation does not pre-approve future cycles.
 
 Four public incident decisions reference current Podcast/ZEMA canonical documentation and exact finding signatures. They distinguish a repaired historical callback and completed import repair from pending scheduled/benchmark evidence, and preserve the owner's media acceptance deferral. New incident evidence, a changed document hash or the October 7 review date invalidates the matching decision. The real test email preceded these final context refinements; subsequent scans use the published reviewed policy.
 
 Change detection compares against the most recently delivered report. Local and hosted previews cannot consume changes before the recipient sees them.
 
 The September 7 summary-format update replaces cards with headings, bullet points and links; sends native UTF-8 attachment bytes; and adds delivered-run receipts while keeping all open issues/PRs. Apply migration `0002_reported_actions.sql` before deploying. Existing confirmed deliveries are indexed automatically; no receipt reset or report overwrite is needed.
+
+The September 24 Jev update adds explicit development evaluation through pinned
+Platform Test Core 0.3.0 and fixes a missing incomplete-coverage warning in
+plain-text email. [The trial record](JEV_EVALUATION.md#september-24-2026-local-trial)
+records 46 synthetic requests and the regression it found. Normal CI stays
+offline; no Jev credential, request, migration or new binding enters production.
+Publication and deployment evidence is linked from the release pull request and
+the protected deployment workflow. The previous deployed revision remains the
+rollback baseline until the new deployment and hosted preview are verified.

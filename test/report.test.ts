@@ -103,6 +103,27 @@ it("empty selected scope is explicitly empty", async () => {
   expect(result.coverage.status).toBe("empty");
   expect(renderReport(result).html).toContain("No repositories selected");
 });
+it("qualifies empty inventories in both email formats when collection is incomplete", async () => {
+  const p = await report();
+  const partial = await buildReport({
+    id: "partial-inventory",
+    at: p.observedAt,
+    policy: p.policy,
+    selection: p.selection,
+    repositories: [
+      collected({
+        repo: repo(1, { private: true }),
+        gaps: [{ area: "issues", code: "access_denied" }],
+      }),
+    ],
+    gaps: [],
+  });
+  const rendered = renderReport(partial);
+  const message =
+    "No open issues found. Coverage is incomplete; see the gaps below.";
+  expect(rendered.html).toContain(message);
+  expect(rendered.text).toContain(message);
+});
 it("validates artifact ZIP entry, path traversal and expanded size", () => {
   expect(
     readArtifactZip(

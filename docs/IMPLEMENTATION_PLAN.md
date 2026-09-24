@@ -1,12 +1,12 @@
 # Implementation and acceptance plan
 
-Updated September 7, 2026. The user authorized implementation, deployment and activation using Cloudflare Email Sending. This plan records the product boundaries and acceptance sequence; the implementation details live in the architecture, configuration, selection, email and operations guides.
+Updated September 24, 2026. Initial implementation, deployment and activation using Cloudflare Email Sending were authorized September 7. The September 13 and 20 scheduled deliveries now satisfy the initial two-cycle observation gate. This plan records the product boundaries and acceptance sequence; the implementation details live in the architecture, configuration, selection, email and operations guides.
 
 ## Outcome
 
 Send a useful Sunday 08:00 America/Denver report with failed Actions, every open issue/PR, evidence links and deterministic recommendations, plus a self-contained Markdown attachment for Codex. Private repository scanning is mandatory. Default scope includes accessible owner repositories and forks, excluding archives and `burque-presente`, with easy editable selection and explicit archive opt-ins.
 
-The initial release observes and recommends. It never mutates scanned repositories, reruns Actions, closes issues, merges, deploys other projects or deletes branches/builds. The owner separately authorizes Codex maintenance. There is no LLM dependency, dashboard, duplicate knowledge base or general agent framework.
+The initial release observes and recommends. It never mutates scanned repositories, reruns Actions, closes issues, merges, deploys other projects or deletes branches/builds. The owner separately authorizes Codex maintenance. There is no runtime LLM dependency, dashboard, duplicate knowledge base or general agent framework. [Jev development evaluation](JEV_EVALUATION.md) adds optional semantic regression evidence without changing these runtime boundaries.
 
 ## Delivery architecture
 
@@ -25,7 +25,7 @@ The implementation shares a collector, resolver and report model between CLI and
 5. **Mail and activation:** one authorized real email with Markdown, independent provider delivery event, authenticated attachment download, duplicate-send regression coverage and rollback controls. Then enable the Sunday schedule and GitHub watchdog.
 6. **Operational observation:** verify two consecutive real Sunday reports. A manual run or simulated clock test cannot prove scheduled delivery; the watchdog continues checking this after initial deployment. Keep this acceptance distinction visible in operations records.
 
-The initial target is Sunday September 13, 2026 at 08:00 Denver. If activation occurs later, use the next Sunday. A useful partial report is preferable to silently dropping a repository, but partial coverage must never satisfy launch/health acceptance.
+The initial September 13 and 20, 2026 targets at 08:00 Denver completed with full coverage and confirmed delivery; [Operations](OPERATIONS.md) records the verification. Continue checking each subsequent due slot. A useful partial report is preferable to silently dropping a repository, but partial coverage must never satisfy launch/health acceptance.
 
 ## Path toward self-driving repositories
 
