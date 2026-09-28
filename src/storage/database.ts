@@ -43,7 +43,7 @@ export async function freezeReport(env: RuntimeEnv, report: Report) {
   for (let i = 0; i < statements.length; i += 50)
     await env.DB.batch(statements.slice(i, i + 50));
   await env.DB.prepare(
-    "UPDATE runs SET completed_at=?,state=?,policy_version=?,coverage_status=?,selected=?,scanned=?,private_scanned=?,bundle_hash=? WHERE id=?",
+    "UPDATE runs SET completed_at=?,state=?,policy_version=?,coverage_status=?,selected=?,scanned=?,private_scanned=?,bundle_hash=?,error_code=NULL WHERE id=?",
   )
     .bind(
       report.completedAt,

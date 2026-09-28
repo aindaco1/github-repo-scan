@@ -44,10 +44,17 @@ export function parseStrict(text: string): unknown {
   visit(root);
   return getNodeValue(root);
 }
-export const code = (error: unknown): string =>
-  error instanceof Error && /^[a-z0-9_:.-]{1,100}$/i.test(error.message)
+export const code = (error: unknown): string => {
+  if (!(error instanceof Error)) return "unexpected_error";
+  if (
+    error.message ===
+    "put: We encountered an internal error. Please try again. (10001)"
+  )
+    return "r2_internal_error";
+  return /^[a-z0-9_:.-]{1,100}$/i.test(error.message)
     ? error.message
     : "unexpected_error";
+};
 export function githubUrl(value: string): string {
   try {
     const url = new URL(value);
