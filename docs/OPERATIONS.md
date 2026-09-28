@@ -52,6 +52,9 @@ checkpoints are complete and no email was attempted. Successful freezing clears
 the previous failure code. Confirm coverage, immutable download hashes and a
 provider delivery event afterward; a late recovery does not establish on-time
 scheduled delivery.
+Late preparation or recovery skips an expired delivery target and proceeds
+through the same single-send outbox claim. Future targets still wait until the
+scheduled time.
 
 Collector errors are bounded codes. Source metadata remains in private checkpoints/reports. Private 404 means access-or-removal ambiguity, not deletion. Missing artifacts mean unknown acceptance, not a passing gate. A newer failure invalidates an old incident-specific deferral.
 

@@ -173,7 +173,8 @@ export class ScanWorkflow extends WorkflowEntrypoint<RuntimeEnv, ScanParams> {
         },
       );
       if (params.send) {
-        if (params.deliverAt)
+        // sleepUntil rejects past timestamps during late preparation/recovery.
+        if (params.deliverAt && Date.parse(params.deliverAt) > Date.now())
           await step.sleepUntil("delivery-target", new Date(params.deliverAt));
         await step.do(
           "send-frozen-report",

@@ -8,7 +8,14 @@ export async function freezeReport(env: RuntimeEnv, report: Report) {
   )
     .bind(report.id)
     .first<{ bundle_hash: string }>();
-  if (existing?.bundle_hash) return;
+  if (existing?.bundle_hash) {
+    await env.DB.prepare(
+      "UPDATE runs SET state='frozen',error_code=NULL WHERE id=?",
+    )
+      .bind(report.id)
+      .run();
+    return;
+  }
   const files = await renderBundle(report);
   for (const [name, body] of Object.entries(files)) {
     const key = `reports/${report.id}/${name}`;
