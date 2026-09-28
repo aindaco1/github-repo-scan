@@ -47,7 +47,7 @@ export class ScanWorkflow extends WorkflowEntrypoint<RuntimeEnv, ScanParams> {
         .run();
     });
     try {
-      const setup = await step.do(
+      const setupJson = await step.do(
         "snapshot-policy-and-inventory",
         {
           retries: { limit: 2, delay: "10 seconds", backoff: "exponential" },
@@ -57,7 +57,7 @@ export class ScanWorkflow extends WorkflowEntrypoint<RuntimeEnv, ScanParams> {
           const existing = await this.env.REPORTS.get(
             `checkpoints/${id}/setup.json`,
           );
-          if (existing) return existing.json<any>();
+          if (existing) return existing.text();
           const api = client(),
             inventory = await api.inventory(),
             policy = await loadPolicy(this.env, api);
@@ -92,13 +92,14 @@ export class ScanWorkflow extends WorkflowEntrypoint<RuntimeEnv, ScanParams> {
             gaps: resolved.gaps,
             previousId: previous?.id ?? null,
           };
-          await this.env.REPORTS.put(
-            `checkpoints/${id}/setup.json`,
-            JSON.stringify(data),
-          );
-          return data;
+          // JSON policy records can have null prototypes. Persist and return
+          // the same JSON bytes instead of passing them to Workflow cloning.
+          const content = JSON.stringify(data);
+          await this.env.REPORTS.put(`checkpoints/${id}/setup.json`, content);
+          return content;
         },
       );
+      const setup = JSON.parse(setupJson);
       for (const row of setup.selection.filter((r: any) => r.selected))
         await step.do(
           `collect-${row.repositoryId}`,
@@ -119,7 +120,12 @@ export class ScanWorkflow extends WorkflowEntrypoint<RuntimeEnv, ScanParams> {
         );
       await step.do(
         "freeze-report",
-        { retries: { limit: 2, delay: "5 seconds" }, timeout: "5 minutes" },
+        {
+          // Storage can recover after collection's deadline. Reuse checkpoints
+          // and frozen bytes while allowing a bounded R2 outage to clear.
+          retries: { limit: 5, delay: "30 seconds", backoff: "exponential" },
+          timeout: "5 minutes",
+        },
         async () => {
           const key = `checkpoints/${id}/final.json`;
           let report: Report;

@@ -42,6 +42,17 @@ rendered output. A deployment preview does not establish new email delivery.
 
 `POST /admin/runs/RUN_ID/recover` resumes the same run or delivery. A prepared delivery may send once; an attempted/accepted/ambiguous delivery will never be automatically resent. Inspect the outbox and Cloudflare activity/events first. Recovery preserves the original collection deadline and frozen policy; it cannot turn an expired incomplete scan into a fresh one. A fresh scan gets a new ID and current policy/evidence. Do not treat a new run as a safe email retry when the previous delivery is unresolved.
 
+Report freezing retries storage up to five times after the first attempt, with
+30-second exponential backoff and a five-minute timeout per attempt. These
+storage retries can continue after the collection deadline; they reuse the
+repository checkpoints and any frozen report bytes without collecting newer
+evidence. An exhausted R2 internal-write failure is recorded as
+`r2_internal_error`. Once storage recovers, recover the original run when its
+checkpoints are complete and no email was attempted. Successful freezing clears
+the previous failure code. Confirm coverage, immutable download hashes and a
+provider delivery event afterward; a late recovery does not establish on-time
+scheduled delivery.
+
 Collector errors are bounded codes. Source metadata remains in private checkpoints/reports. Private 404 means access-or-removal ambiguity, not deletion. Missing artifacts mean unknown acceptance, not a passing gate. A newer failure invalidates an old incident-specific deferral.
 
 The delivery Queue verifies source/account/subscription/domain and fixed identity. Failed consumption retries through its dead-letter queue. Inspect that queue if provider delivery is visible but D1 remains unconfirmed. Never apply another consumer's delivery event to this scanner.
