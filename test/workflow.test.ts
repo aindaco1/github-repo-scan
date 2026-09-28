@@ -47,7 +47,13 @@ function steps() {
         }
       }
     },
-    sleepUntil: vi.fn(async () => {}),
+    sleepUntil: vi.fn(async (_name: string, target: Date) => {
+      if (target.getTime() < Date.now())
+        throw new Error(
+          "You can't sleep until a time in the past, time-traveler",
+        );
+      vi.setSystemTime(target);
+    }),
   };
 }
 
@@ -124,6 +130,28 @@ it("survives three R2 failures after collection without rescanning or changing f
   await f.execute();
   expect(f.objects).toEqual(files);
   expect(f.send).toHaveBeenCalledTimes(1);
+});
+
+it("waits for a future delivery target and skips it when recovering a frozen report late", async () => {
+  const f = await fixture();
+  const first = steps();
+  await f.execute(first);
+  expect(first.sleepUntil).toHaveBeenCalledWith(
+    "delivery-target",
+    new Date("2026-09-27T14:00:00Z"),
+  );
+  expect(f.send).toHaveBeenCalledTimes(1);
+  const files = new Map(f.objects);
+  f.sqlite.exec("UPDATE runs SET state='failed',error_code='unexpected_error'");
+  vi.setSystemTime(new Date("2026-09-28T04:00:00Z"));
+  const recovery = steps();
+  await f.execute(recovery);
+  expect(recovery.sleepUntil).not.toHaveBeenCalled();
+  expect(f.objects).toEqual(files);
+  expect(f.send).toHaveBeenCalledTimes(1);
+  expect(
+    f.sqlite.prepare("SELECT state,error_code FROM runs").get(),
+  ).toMatchObject({ state: "frozen", error_code: null });
 });
 
 it("bounds storage retries, records a safe failure, and recovers the same expired run without a duplicate send", async () => {
